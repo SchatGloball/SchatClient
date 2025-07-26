@@ -1,0 +1,51 @@
+syntax="proto3";
+service CallRpc {
+    rpc CreateGroupCall (UpdateDTO) returns (ResponseDto);
+    rpc ListenCall (RequestDto) returns (stream UpdateDTO);
+    rpc EnterToRoom (stream RequestDto) returns (stream UpdateDTO);
+    rpc ExitToRoom (RequestDto) returns (ResponseDto);
+}
+message RequestDto
+{
+    string room = 1;
+    oneof optionalData
+    {
+        CallDto callData = 2;
+    }
+}
+message MemberDto
+{
+    string member_username = 1;
+    oneof optional_member
+    {
+        string member_image= 2;
+    }
+}
+message ResponseDto{
+    string message = 1;
+}
+message UpdateDTO
+{
+    repeated UserDto users = 1;
+    bool video = 2;
+    bool exitCall = 3;
+    string room = 4;
+
+    oneof optionalData
+    {
+        CallDto callData = 5;
+    }
+
+}
+message UserDto {
+    string username = 1;
+    string image_avatar = 2;
+}
+message CallDto
+{
+    bytes soundData = 1;
+    bytes videoData = 2;
+}
+
+
+

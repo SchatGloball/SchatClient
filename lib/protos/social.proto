@@ -1,0 +1,112 @@
+syntax="proto3";
+
+
+service SocialRpc {
+  rpc FetchAllChannels (RequestDto) returns (ListChannelsDto);
+  rpc FetchUserChannels (RequestDto) returns (ListChannelsDto);
+  rpc FetchUserPosts (RequestPostsDto) returns (ListPostsDto);
+  rpc FetchChannelPosts (RequestPostsDto) returns (ListPostsDto);
+  rpc FetchOnePost (PostDto) returns (PostDto);
+  rpc AddUserChannel (ChannelDto) returns (ResponseDto);
+  rpc CreateChanel (ChannelDto) returns (ResponseDto);
+  rpc EditChanel (ChannelDto) returns (ResponseDto);
+  rpc DeleteChanel (ChannelDto) returns (ResponseDto);
+  rpc CreatePost (PostDto) returns (ResponseDto);
+  rpc DeletePost (PostDto) returns (ResponseDto);
+  rpc CreateComment (CommentDto) returns (ResponseDto);
+  rpc DeleteComment (CommentDto) returns (ResponseDto);
+  rpc LikePost (PostDto) returns (ResponseDto);
+  rpc LikeComment (CommentDto) returns (ResponseDto);
+  rpc SearchChannel (SearchRequestDto) returns (ListChannelsDto);
+}
+
+message RequestPostsDto
+{ int32 offset = 1;
+ ChannelDto channel = 2;
+}
+
+message RequestDto
+{}
+
+message SearchRequestDto
+{
+  string searchRequest = 1;
+}
+
+message MemberDto
+{
+  string member_username = 1;
+  oneof optional_member
+  {
+    string member_image= 2;
+  }
+}
+
+
+message ListChannelsDto
+{
+  repeated ChannelDto channels = 1;
+}
+
+message ListPostsDto
+{
+  repeated PostDto posts = 1;
+}
+
+message ChannelDto
+{
+  int32 id =1;
+  string name =2;
+  int32 author_id =3;
+  repeated MemberDto members = 6;
+  repeated PostDto posts = 4;
+  bytes image = 7;
+  repeated string tags = 8;
+  repeated string topik = 9;
+
+  oneof optional_chat
+  {
+    string channel_image = 5;
+  }
+
+}
+
+message PostDto
+{
+  int32   id = 1;
+  string body = 2;
+  int32 author_id = 3;
+  int32 channel_id = 4;
+  string author_name = 5;
+  repeated string likes = 6;
+  repeated bytes data = 7;
+  repeated string content = 8;
+  int32 sticker_content = 9;
+  repeated CommentDto comments = 11;
+  repeated string tags = 12;
+  string topik = 13;
+
+  oneof optional_message
+  {
+    string date_post = 10;
+  }
+}
+
+message CommentDto
+{
+  int32   id = 1;
+  string body = 2;
+  int32 author_id = 3;
+  int32 post_id = 4;
+  string author_name = 5;
+  repeated bytes data = 6;
+  repeated string content = 7;
+  int32 sticker_content = 8;
+  repeated string likes = 9;
+  string date_comment = 10;
+}
+
+message ResponseDto{
+bool success =1;
+  string message = 2;
+}
