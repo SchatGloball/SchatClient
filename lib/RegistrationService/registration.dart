@@ -52,7 +52,7 @@ class _RegistrationPage extends State<RegistrationPage> {
 
   registration() async {
     Map tokens =
-        await userApi.userRegistration(userName, userEmail, userPassword);
+        await config.server.userApi.userRegistration(userName, userEmail, userPassword);
     if (tokens.keys.first == 'Error') {
       showErrorDialog(context, tokens['Error'].toString());
     } else {
@@ -239,15 +239,17 @@ class _RegistrationPage extends State<RegistrationPage> {
         )),
         floatingActionButton: FloatingActionButton(
           onPressed: () async {
-            Navigator.push(
+          await  Navigator.push(
                 context,
                 MaterialPageRoute(
                     builder: (BuildContext context) => const SettingsPage()));
+                    setState(() {
+                      
+                    });
           },
           backgroundColor: Colors.black54,
           child: Icon(
             Icons.settings_outlined,
-            color: config.accentColor,
           ),
         ),
       ),

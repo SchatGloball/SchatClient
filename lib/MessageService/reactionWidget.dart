@@ -10,45 +10,21 @@ class ReactionWidget extends StatefulWidget {
   ReactionWidget({super.key, required this.message});
 
   @override
-  State<ReactionWidget> createState() => _ReactionWidget(message: message);
+  State<ReactionWidget> createState() => _ReactionWidget();
 }
 
 class _ReactionWidget extends State<ReactionWidget> {
-  late Message message;
+  
 
-  _ReactionWidget({required this.message});
 bool reactionsView = false;
 
 
   @override
   void initState() {
     super.initState();
-    checkUpdate();
   }
 
-  checkUpdate()async
-  {
-    eventStream = chatApi.eventController.stream.listen((item) async {
-     if(item.chat.messages.isNotEmpty)
-       {
-         if(item.chat.messages.first.reaction.isNotEmpty&&item.chat.messages.first.id==message.id)
-           {
-             List<int> reactionsId = [];
-             for(ReactionMessage r in message.reactions)
-               {
-                 reactionsId.add(r.id);
-               }
-             if(!reactionsId.contains(item.chat.messages.first.reaction.last.id))
-               {
-                 message.reactions.add(ReactionMessage(item.chat.messages.first.reaction.last));
-                 setState(() {
-                 });
-               }
-
-           }
-       }
-    });
-  }
+  
 
   @override
   void dispose() {
@@ -69,7 +45,7 @@ bool reactionsView = false;
 
     Expanded(
     child:
-    Text('${message.reactions.length} - ${message.reactions.first.body}',
+    Text('${widget.message.reactions.length} - ${widget.message.reactions.first.body}',
       style: const TextStyle(
           color: Colors.white, fontSize: 15),
       overflow: TextOverflow.ellipsis,
@@ -83,7 +59,7 @@ bool reactionsView = false;
                   physics: const NeverScrollableScrollPhysics(),
                   shrinkWrap:
                   true,
-                  itemCount: message.reactions.length,
+                  itemCount: widget.message.reactions.length,
               separatorBuilder: (context, index) => const SizedBox(height: 10),
                   itemBuilder: (context, index) {
                     return Container(
@@ -94,16 +70,16 @@ bool reactionsView = false;
                         ),
                         child:
                             InkWell(
-                              onLongPress: message.reactions[index].authorId == userGlobal.id ? ()async{
+                              onLongPress: widget.message.reactions[index].authorId == config.server.userGlobal.id ? ()async{
                                bool check = await  acceptDialog(context, 'Remove?')??false;
                                if(check)
                                  {
                                    try{
-                                     String res =  await chatApi.removeReaction(message.reactions[index]);
+                                     String res =  await config.server.chatApi.removeReaction(widget.message.reactions[index]);
                                      if(res=='success')
                                      {
                                        setState(() {
-                                         message.reactions.remove(message.reactions[index]);
+                                         widget.message.reactions.remove(widget.message.reactions[index]);
                                        });
                                      }
                                    }
@@ -116,13 +92,13 @@ bool reactionsView = false;
                               child: Column(children: [
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.end,
-                                  children: [Text('${message.reactions[index].date} ${message.reactions[index].authorName}',
+                                  children: [Text('${widget.message.reactions[index].date} ${widget.message.reactions[index].authorName}',
                                       style: Theme.of(context).textTheme.titleSmall ),],
                                 ),
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.end,
                                   children: [
-                                    Text(message.reactions[index].body,
+                                    Text(widget.message.reactions[index].body,
                                         style: Theme.of(context).textTheme.titleSmall)
                                   ],)
                               ],),

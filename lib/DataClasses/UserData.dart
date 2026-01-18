@@ -1,36 +1,17 @@
 import '../eventStore.dart';
 
 class User {
-  User(int idUser, String nameUser, String imageAvatarUser) {
+  User(int idUser, String nameUser, String imageAvatarUser, bool isBotUser) {
     id = idUser;
     userName = nameUser;
     imageAvatar = imageAvatarUser;
+    isBot = isBotUser;
   }
   late final int id;
   late final String userName;
+  late bool isBot;
   String imageAvatar = '';
-  String accessToken = '';
-  String refreshToken = '';
 
-  void setTokens(accessTokenNew, refreshTokenNew) async{
-    accessToken = accessTokenNew;
-    refreshToken = refreshTokenNew;
-    if (accessToken != '' && accessToken != '') {
-     await storage.setTokens(accessToken, refreshToken);
-    }
-  }
-
-  void clearTokens() {
-    refreshToken = '';
-    accessToken = '';
-      storage.setTokens(accessToken, refreshToken);
-  }
-  getTokens()async
-  {
-    Map tokens = await storage.getAppConfig();
-    accessToken = tokens['accessToken'];
-    refreshToken = tokens['refreshToken'];
-  }
 
   bool get dialogToUser {
     for (var element in allChats) {

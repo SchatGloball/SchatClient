@@ -4,6 +4,7 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   audioplayers_linux
+  flutter_localization
   irondash_engine_context
   local_notifier
   media_kit_libs_linux
@@ -11,7 +12,6 @@ list(APPEND FLUTTER_PLUGIN_LIST
   record_linux
   super_native_extensions
   url_launcher_linux
-  volume_controller
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST

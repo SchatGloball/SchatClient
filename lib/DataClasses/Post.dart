@@ -38,10 +38,11 @@ class PostData {
       linksInBody.add(match.group(0)!);
     }
 
+  topik = post.topik;
     stickerContent = post.stickerContent;
     post.datePost = post.datePost.replaceAll("T", " ");
     datePost = parseDate(post.datePost);
-    topik = post.topik;
+  
     date = DateTime(
         int.parse(post.datePost.split(' ')[0].split('-')[0]),
         int.parse(post.datePost.split(' ')[0].split('-')[1]),
@@ -54,6 +55,7 @@ class PostData {
       {
         comments.add(CommentData(comment));
       }
+      likes.addAll(post.likes);
   }
 
   late final int id;
@@ -75,6 +77,7 @@ class PostData {
   late final String topik;
 
   parseDate(String dateTime) {
+ 
     String year = dateTime.split(' ')[0].split('-')[0];
     String mouth = dateTime.split(' ')[0].split('-')[1];
     String day = dateTime.split(' ')[0].split('-')[2];
@@ -82,6 +85,7 @@ class PostData {
     String minute = dateTime.split(' ')[1].split(':')[1];
     String second = dateTime.split(' ')[1].split(':')[2].split('.')[0];
     String timeMessage = '$year.$mouth.$day $hour:$minute:$second';
-    return timeMessage;
+   return timeMessage;
+   
   }
 }

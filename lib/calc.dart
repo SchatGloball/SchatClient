@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_simple_calculator/flutter_simple_calculator.dart';
-import 'appTheme.dart';
 import 'eventStore.dart';
-import 'main.dart';
+
 
 class CalcButton extends StatefulWidget {
   const CalcButton({Key? key}) : super(key: key);
@@ -32,17 +31,7 @@ class CalcButtonState extends State<CalcButton> {
         });
         if(value.toString().split('.').first == config.localPass)
           {
-
-                Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(
-                        builder: (context) => MaterialApp(
-                          home: InitialApp(checkLocalPass: false,),
-                          darkTheme: darkTheme,
-                          themeMode: ThemeMode.dark,
-                        )),
-                        (Route<dynamic> route) => false);
-
-
+Navigator.pop(context, true);
           }
 // print(value.toString().split('.').first);
 //           print('$key\t$value\t$expression');
@@ -73,9 +62,11 @@ class CalcButtonState extends State<CalcButton> {
     return Scaffold(
       appBar: AppBar(title: const Text('Simple calc'), backgroundColor: Colors.blueAccent,),
       backgroundColor: Colors.blueAccent,
-      body: SizedBox(
+      body:
+      SafeArea(child: SizedBox(
           height: MediaQuery.of(context).size.height,
-          child: calc),
+          child: calc))
+       ,
     )
              ;
             }

@@ -1,17 +1,14 @@
 import 'dart:async';
 import 'dart:math';
 import 'dart:typed_data';
-import 'package:audioplayers/audioplayers.dart';
-import 'package:mp_audio_stream/mp_audio_stream.dart';
-import 'package:record/record.dart';
 import 'package:flutter/material.dart';
-
-
-
+import 'package:flutter/services.dart';
+import 'package:flutter_voice_processor/flutter_voice_processor.dart';
+import 'package:mp_audio_stream/mp_audio_stream.dart';
 import '../DataClasses/callData.dart';
 import '../eventStore.dart';
 import '../generated/call.pb.dart';
-import '../main.dart';
+
 
 
 
@@ -29,67 +26,155 @@ class _CallPage extends State<CallPage> {
   Call  call;
   _CallPage({required this.call});
 
-  bool connect = false;
+ bool connect = false;
   StreamController<RequestDto> controller = StreamController<RequestDto>();
 
-  final audioStream = getAudioStream();
-  // Получаем Stream из контроллера
-  final record = AudioRecorder();
+    final int frameLength = 512;
+  final int sampleRate = 16000;
 
+  final int volumeHistoryCapacity = 5;
+  final double dbOffset = 50.0;
+  final List<double> _volumeHistory = [];
+  double _smoothedVolumeValue = 0.0;
+  bool voice = false;
+  bool _isProcessing = false;
+  String? _errorMessage;
+  VoiceProcessor? _voiceProcessor;
+  late StreamSubscription<UpdateDTO> listenSound;
+  
   @override
   void initState() {
-    audioStream.init();
-    findUser();
+    print(call.users.length);
+        audioStream.init(channels: 1, sampleRate: sampleRate); 
+  _initVoiceProcessor();
     super.initState();
-    if(activeCall==call.id)
+    if(activeCall == call.id)
     {
-      voiceSpeak();
+ voiceSpeak();
     }
+    else
+    {
+player.playCall();  
+    }
+    activeCall = call.id;
+
   }
-bool voice = false;
+
 
   @override
   void dispose() {
-    controller.onCancel;
+  _voiceProcessor?.removeFrameListener(_onFrame);
+  _voiceProcessor?.removeErrorListener(_onError);
+  _voiceProcessor?.stop();
+  if (!controller.isClosed) {
+    controller.close();
+  }
     audioStream.uninit();
+    activeCall = '';
     super.dispose();
   }
 
 
 
-  // Stream<RequestDto> startVoice() async* {
-  //   if (await record.hasPermission()) {
-  //     Stream<RequestDto> streamUpdate = controller.stream;
-  //     Stream<Uint8List> streamAudio = await record.startStream(const RecordConfig(encoder: AudioEncoder.pcm16bits, numChannels: 1, bitRate: sampleRate));
-  //    streamAudio.listen((update) {
-  //      controller.add(RequestDto(room: call.id, callData: CallDto(soundData: update, videoData: [])));
-  //     },);
-  //     yield* streamUpdate;
-  //   }
-  // }
-Uint8List u = Uint8List(11264);
-  Stream<RequestDto> startVoice() async* {
-    if (await record.hasPermission()) {
-      final Stream<Uint8List> stream = await record.startStream(
-          const RecordConfig(
-              encoder: AudioEncoder.pcm16bits, numChannels: 1, bitRate: 44100));
-      stream.listen((item) {
+    
+  void _initVoiceProcessor() async {
+    _voiceProcessor = VoiceProcessor.instance;
+  }
 
-        u=item;
-        print(item.length);
-        if(voice)
-        {
-          controller.add(RequestDto(room: call.id, callData: CallDto(soundData: item, videoData: [])));
-        }
-        else
-        {
-          controller.add(RequestDto(room: call.id, callData: CallDto(soundData: [], videoData: [])));}
+  Future<void> _startProcessing() async {
+    setState(() {
+      connect = true;
+      Future.delayed(const Duration(seconds: 2), () => voice = true);
+    });
+    _voiceProcessor?.addFrameListener(_onFrame);
+    _voiceProcessor?.addErrorListener(_onError);
+    try {
+      if (await _voiceProcessor?.hasRecordAudioPermission() ?? false) {
+        await _voiceProcessor?.start(frameLength, sampleRate);
+        bool? isRecording = await _voiceProcessor?.isRecording();
+        setState(() {
+          _isProcessing = isRecording!;
+        });
+      } else {
+        setState(() {
+          _errorMessage = "Recording permission not granted";
+        });
+      }
+    } on PlatformException catch (ex) {
+      setState(() {
+        _errorMessage = "Failed to start recorder: " + ex.toString();
       });
-      Stream<RequestDto> streamUpdate = controller.stream;
-
-      yield* streamUpdate;
+    } finally {
+      setState(() {
+        voice = false;
+      });
     }
   }
+
+  Future<void> _stopProcessing() async {
+    setState(() {
+      voice = true;
+    });
+
+    try {
+      await _voiceProcessor?.stop();
+    } on PlatformException catch (ex) {
+      setState(() {
+        _errorMessage = "Failed to stop recorder: " + ex.toString();
+      });
+    } finally {
+      bool? isRecording = await _voiceProcessor?.isRecording();
+      setState(() {
+        voice = false;
+        _isProcessing = isRecording!;
+      });
+    }
+  }
+
+  void _toggleProcessing() async {
+    if (_isProcessing) {
+      await _stopProcessing();
+    } else {
+      await _startProcessing();
+    }
+  }
+
+  double _calculateVolumeLevel(List<int> frame) {
+    double rms = 0.0;
+    for (int sample in frame) {
+      rms += pow(sample, 1);
+    }
+    rms = sqrt(rms / frame.length);
+
+    double dbfs = 20 * log(rms / 32767.0) / log(10);
+    double normalizedValue = (dbfs + dbOffset) / dbOffset;
+    return normalizedValue.clamp(0.0, 1.0);
+  }
+
+  void _onFrame(List<int> frame) {
+    if(voice)
+    {
+ controller.add(RequestDto(room: call.id, callData: CallDto(soundData: frame, videoData: [])));
+    }
+    double volumeLevel = _calculateVolumeLevel(frame);
+    if (_volumeHistory.length == volumeHistoryCapacity) {
+      _volumeHistory.removeAt(0);
+    }
+    _volumeHistory.add(volumeLevel);
+
+    setState(() {
+      _smoothedVolumeValue =
+          _volumeHistory.reduce((a, b) => a + b) / _volumeHistory.length;
+    });
+  }
+
+  void _onError(VoiceProcessorException error) {
+    setState(() {
+      _errorMessage = error.message;
+    });
+  }
+
+
 
   findUser()async
   {
@@ -108,66 +193,35 @@ Uint8List u = Uint8List(11264);
     // }
   }
 
-  Float32List uint8ListToFloat32ListAudio(Uint8List uint8List, {int sampleWidth = 16, bool isSigned = false}) {
-    if (uint8List.length % (sampleWidth ~/ 8) != 0) {
-      throw ArgumentError('Uint8List length must be a multiple of sampleWidth.');
-    }
 
-    final numSamples = uint8List.length ~/ (sampleWidth ~/ 8);
-    final float32List = Float32List(numSamples);
-    final byteData = ByteData.view(uint8List.buffer);
-
-    for (int i = 0; i < numSamples; i++) {
-      int sampleValue;
-      switch (sampleWidth) {
-        case 8:
-          sampleValue = byteData.getInt8(i);
-          break;
-        case 16:
-          sampleValue = byteData.getInt16(i * 2, Endian.little); // или Endian.big
-          break;
-      // Добавьте другие случаи для 24-битных и т.д.
-        default:
-          throw ArgumentError('Unsupported sample width: $sampleWidth');
-      }
-
-      // Нормализация к диапазону [-1.0, 1.0]
-      double normalizedValue;
-      if (!isSigned) {
-        normalizedValue = 2 * (sampleValue / (pow(2, sampleWidth) - 1)) - 1;
-      } else {
-        normalizedValue = sampleValue / pow(2, sampleWidth - 1); // Остаётся без изменений для signed данных
-      }
-
-      float32List[i] = normalizedValue;
-    }
-    return float32List;
-  }
-
+final audioStream = getAudioStream();
   voiceSpeak()async
   {
-    setState(() {
-      connect = true;
-    });
+connect = true;
+    
 
-    Stream<RequestDto> n = startVoice();
-    Stream<UpdateDTO> voiceStream = callApi.enterToRoom(n);
-
-    voiceStream.listen((update) async {
-      final float32List = uint8ListToFloat32ListAudio(u, sampleWidth: 16);
-   audioStream.push(float32List);
- //   return;
-
-
-    // List<double> b = [];
-    // for(int i in update.callData.soundData)
-    //   {
-    //     b.add(double.parse(i.toString()));
-    //   }
-    //   audioStream.push(Float32List.fromList(b));
+_startProcessing();
+    
+    Stream<UpdateDTO> voiceStream = config.server.callApi.enterToRoom(controller.stream);
+    listenSound = voiceStream.listen((update) async {
+      if(update.exitCall)
+      { 
+        listenSound.cancel();
+        Navigator.pop(context);
+      return;
+      
+      }
+if (update.callData.soundData.isNotEmpty) {
+      final Float32List floatSamples = Float32List(update.callData.soundData.length);
+      for (int i = 0; i < update.callData.soundData.length; i++) {
+  floatSamples[i] = update.callData.soundData[i] / 32767.0;
+}
+      audioStream.push(floatSamples);
+    } else {
+      print("Received empty soundData list for this update.");
+    }
     },);
   }
-
 
 
 
@@ -257,18 +311,28 @@ Uint8List u = Uint8List(11264);
                         IconButton(onPressed: ()async{
                           if(!connect)
                           {
+                          await player.stop();
                            await voiceSpeak();
                           }
                           else
                           {
-                            Navigator.pop(context);
+                          String res =  await config.server.callApi.exitCall(call.id);
+                          if(res=='succes')
+                          {
+   Navigator.pop(context);
+                          }
+                        
                           }
                         }, icon:  Icon(Icons.phone, color:  connect? Colors.redAccent: Colors.lightGreen),
                           color: config.accentColor, iconSize: 30, style: ButtonStyle(backgroundColor: WidgetStateProperty.all(Colors.white60), ), ),
                         IconButton(onPressed: ()async{
+                          
+
 setState(() {
   voice = !voice;
 });
+
+
                         }, icon:  Icon(voice?Icons.mic_none_rounded:Icons.mic_off_sharp, color:  voice? Colors.lightGreen: Colors.redAccent),
                           color: config.accentColor, iconSize: 30, style: ButtonStyle(backgroundColor: WidgetStateProperty.all(Colors.white60), ), ),
 

@@ -2,30 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lottie/lottie.dart';
 import 'package:protobuf/protobuf.dart';
+import 'package:provider/provider.dart';
+import 'package:schat2/%D0%A1allService/callScreen.dart';
 import 'package:schat2/AllChatService/allChat.dart';
-import 'package:schat2/AllSocial/allGroup.dart';
-import 'package:schat2/MessageService/forwardedMessage.dart';
+import 'package:schat2/AllChatService/chatCard.dart';
+import 'package:schat2/AllChatService/messageProvider.dart';
+import 'package:schat2/DataClasses/UserData.dart';
+import 'package:schat2/DataClasses/callData.dart';
 import 'package:schat2/WidescreenChat/actionButton.dart';
-import 'package:schat2/WidescreenChat/sendReaction.dart';
-import 'package:schat2/WidescreenChat/sendSticker.dart';
+import 'package:schat2/MessageService/messageMenu.dart';
+import 'package:schat2/MessageService/sendReaction.dart';
+import 'package:schat2/MessageService/sendSticker.dart';
 import 'package:super_clipboard/super_clipboard.dart';
 import 'package:super_hot_key/super_hot_key.dart';
 import '../CreateChatService/createChat.dart';
-import '../DataClasses/UserData.dart';
 import '../DataClasses/chatData.dart';
 import '../DataClasses/file.dart';
-import '../LoginService/login.dart';
 import '../MessageService/OneMessageWidget.dart';
 import '../MessageService/audioRecorder.dart';
-import '../MessageService/editGroupChat.dart';
-import '../MessageService/message.dart';
-import '../SettingsService/settingsScreen.dart';
 import '../allWidgets/acceptDialog.dart';
 import '../allWidgets/infoDialog.dart';
 import '../eventStore.dart';
 import '../generated/chats.pb.dart';
 import '../localization/localization.dart';
-import '../user/UserGeneral.dart';
 import '../user/userScreen.dart';
 
 class AllChatWidescreenPage extends StatefulWidget {
@@ -40,52 +39,59 @@ class _AllChatWidescreen extends State<AllChatWidescreenPage> {
   void initState() {
     super.initState();
     downloadChats();
-    registerHotkey();
   }
 
   bool stickerPick = false;
-  int selectChat = 0;
-  int selectChatId = 0;
+ 
+  
   ScrollController scrollController = ScrollController();
-  List<Message> selectedMessages = [];
   List<FileData> filesPick = [];
   String message = '';
   final fieldText = TextEditingController();
   late final HotKey? hotKeySend;
-  late final HotKey? hotKeyPaste;
+ 
   bool replyMessage = false;
+  bool bottomButtonView = false;
 
   @override
   void dispose() {
-    chatApi.updateEvent.cancel();
-    hotKeyPaste!.dispose();
+    config.server.chatApi.updateEvent.cancel();
     hotKeySend!.dispose();
     super.dispose();
   }
 
-  registerHotkey() async {
-    hotKeySend = await HotKey.create(
-      definition: HotKeyDefinition(
-        control: true,
-        alt: false,
-        key: PhysicalKeyboardKey.enter,
-        meta: false,
-      ),
-      onPressed: () {
-        sendMessage();
-      },
-    );
+  
 
-    // hotKeyPaste = await HotKey.create(
-    //     definition: HotKeyDefinition(
-    //       control: true,
-    //       alt: false,
-    //       key: PhysicalKeyboardKey.keyV,
-    //       meta: false,
-    //     ),
-    //     onPressed: () {
-    //       clipboard();
-    //     });
+  removeMessages()async
+  {
+    for (var item in selectedMessages) {
+                                              Map res = await config.server.chatApi
+                                                  .removeMessage(item);
+                                              if (res.keys.first == 'Error') {
+                                                infoDialog(
+                                                  context,
+                                                  res['Error'],
+                                                );
+                                              } else {
+                                                setState(() {
+                                                  allChats[selectChat].messages
+                                                      .removeWhere(
+                                                        (element) =>
+                                                            element.id == item,
+                                                      );
+                                                });
+                                              }
+                                            }
+                                            setState(() {
+                                              selectedMessages.clear();
+                                            });
+  }
+
+  activateReplyMessage()
+  {
+    setState(() {
+                                                replyMessage = true;
+                                              });
   }
 
   pickFile() async {
@@ -102,8 +108,12 @@ class _AllChatWidescreen extends State<AllChatWidescreenPage> {
 
   scrollDown() async {
     if (allChats[selectChat].messages.isNotEmpty) {
+      
       scrollController.jumpTo(scrollController.position.minScrollExtent);
     }
+    setState(() {
+        
+      });
   }
 
   initData() async {
@@ -121,7 +131,7 @@ class _AllChatWidescreen extends State<AllChatWidescreenPage> {
       setState(() {
         uploadData = true;
       });
-      Map send = await chatApi.sendMessages(
+      Map send = await config.server.chatApi.sendMessages(
         allChats[selectChat].id,
         message,
         filesPick,
@@ -147,10 +157,20 @@ class _AllChatWidescreen extends State<AllChatWidescreenPage> {
         !scrollController.position.outOfRange) {
       downloadChat(allChats[selectChat].messages.length);
     }
+    if (scrollController.offset > 250) {
+      setState(() {
+        bottomButtonView = true;
+      });
+    }
+    if (scrollController.offset < 250) {
+      setState(() {
+        bottomButtonView = false;
+      });
+    }
   }
 
   downloadChat(int offset) async {
-    Map messages = await chatApi.viewMessagesChat(
+    Map messages = await config.server.chatApi.viewMessagesChat(
       allChats[selectChat].id,
       offset,
     );
@@ -161,27 +181,107 @@ class _AllChatWidescreen extends State<AllChatWidescreenPage> {
     });
   }
 
-  downloadChats() async {
+
+
+
+
+
+
+
+  updateChat(UpdateDTO item) {
+    final MessageProvider messageProvider = Provider.of<MessageProvider>(context, listen: false);
+    messageProvider.newMessageEvent(item);
+    setState(() {
+      for(int i = 0; i < allChats.length; i++)
+      {
+        if(allChats[i].id == selectChatId)
+        {
+selectChat = i;
+        }
+      }
+       
+    });
+  }
+
+
+  void downloadChats() async {
     allChats.clear();
-    Map chatsIsServer = await chatApi.viewAllChat();
+    Map chatsIsServer = await config.server.chatApi.viewAllChat();
     PbList<ChatDto> m = chatsIsServer['chats'];
     for (var e in m) {
       setState(() {
         allChats.add(Chat(e));
       });
     }
-    eventStream = chatApi.eventController.stream.listen((item) {
-      updateChat(item);
-    });
-    listenEventChat();
+    listenChatEvent();
     if (allChats.isNotEmpty) {
       initData();
     }
   }
 
+
+listenChatEvent()
+{
+  listenEventChat();
+eventStream = config.server.chatApi.updateEvent.listen((UpdateDTO item) {
+      updateChat(item);
+    },
+
+onDone: ()async{
+      print('onDone eventStream');
+      Future.delayed(const Duration(seconds: 2), () async{
+        await config.server.refreshTokens();
+ listenChatEvent();
+      });
+    }, onError: (e)async{
+      print('Error eventStream  $e');
+ Future.delayed(const Duration(seconds: 2), () async{
+        await config.server.refreshTokens();
+  listenChatEvent();
+      });
+    }
+    );
+    streamCallSubscription = config.server.callApi.updateEvent.listen((
+      item,
+    ) {
+      if(activeCall.isNotEmpty)
+      {
+        return;
+      }
+      Call call = Call();
+      call.id = item.room;
+      for (var element in item.users) {
+        call.users.add(User(12, element.username, element.imageAvatar, false));
+      }
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (BuildContext context) => CallPage(call: call),
+        ),
+      );
+    }, onDone: ()async{
+      print('onDone eventCallStream');
+      Future.delayed(const Duration(seconds: 2), () async{
+        await config.server.refreshTokens();
+ listenChatEvent();
+      });
+    }, onError: (e)async{
+      print('Error eventCallStream  $e');
+ Future.delayed(const Duration(seconds: 2), () async{
+        await config.server.refreshTokens();
+ listenChatEvent();
+      });
+    }
+     );
+}
+
+
+
+
+
   deleteChat() async {
     final int id = allChats[selectChat].id;
-    Map res = await chatApi.removeChat(id);
+    Map res = await config.server.chatApi.removeChat(id);
     if (res.keys.first != 'Error') {
       final int oldSelect = selectChat;
       setState(() {
@@ -200,97 +300,6 @@ class _AllChatWidescreen extends State<AllChatWidescreenPage> {
     }
   }
 
-  updateChat(item) {
-    bool newChat = true;
-    bool addNotification = true;
-    if (item.runtimeType == UpdateDTO) {
-      UpdateDTO updateChat = item;
-      if (updateChat.chat.authorId == '-1') {
-        removeChatUpdate(updateChat.chat.id);
-      }
-      for (int i = 0; i < allChats.length; i++) {
-        if (allChats[i].id == updateChat.chat.id) {
-          newChat = false;
-          if (updateChat.chat.messages.isNotEmpty) {
-            for (MessageDto m in updateChat.chat.messages) {
-              bool newMessage = true;
-              for (int y = 0; y < allChats[i].messages.length; y++) {
-                if (allChats[i].messages[y].id == m.id) {
-                  newMessage = false;
-                  allChats[i].messages[y] = Message(m);
-                  allChats[i].messages[y].body =
-                      '${allChats[i].messages[y].body} ';
-                }
-              }
-              if (Message(m).authorId == userGlobal.id) {
-                addNotification = false;
-              }
-              if (newMessage) {
-                allChats[i].addMessage(m, true);
-              }
-            }
-          } else {
-            List<Message> m = allChats[i].messages;
-            allChats[i] = Chat(
-              ChatDto(
-                name: updateChat.chat.name,
-                chatImage: updateChat.chat.chatImage,
-                id: updateChat.chat.id,
-                authorId: updateChat.chat.authorId.toString(),
-                members: updateChat.chat.members,
-              ),
-            );
-            allChats[i].messages = m;
-          }
-        }
-      }
-      if (newChat) {
-        addNewChat(updateChat.chat);
-      }
-    } else {
-      addNotification = false;
-    }
-    if (addNotification && config.notification) {
-      player.playNotification();
-      notification.newEvent(
-        'Schat',
-        Localization.localizationData[config
-            .language]['notification']['newMessage'],
-      );
-    }
-    final int selectChatId = allChats[selectChat].id;
-    allChats.sort((b, a) => a.dateLastMessage.compareTo(b.dateLastMessage));
-    for (int i = 0; i < allChats.length; i++) {
-      if (allChats[i].id == selectChatId) {
-        selectChat = i;
-      }
-    }
-    setState(() {});
-  }
-
-  removeChatUpdate(int id) {
-    for (int i = 0; i < allChats.length; i++) {
-      if (allChats[i].id == id) {
-        allChats.removeAt(i);
-      }
-    }
-  }
-
-  addNewChat(ChatDto chat) {
-    allChats.add(Chat(chat));
-  }
-
-  deliveredMessage(int id) {
-    for (var element in allChats) {
-      if (element.id == id && element.messages.isNotEmpty) {
-        if (element.messages.first.authorId != userGlobal.id) {
-          setState(() {
-            element.messages.first.delivered = true;
-          });
-        }
-      }
-    }
-  }
 
   clipboard() async {
     final clipboard = SystemClipboard.instance;
@@ -302,6 +311,7 @@ class _AllChatWidescreen extends State<AllChatWidescreenPage> {
     if (reader.canProvide(Formats.htmlText)) {
       final html = await reader.readValue(Formats.htmlText);
       setState(() {
+        message = message + html.toString();
         fieldText.text = html.toString();
       });
     }
@@ -309,6 +319,7 @@ class _AllChatWidescreen extends State<AllChatWidescreenPage> {
     if (reader.canProvide(Formats.plainText)) {
       final String? text = await reader.readValue(Formats.plainText);
       setState(() {
+        message = message + text.toString();
         fieldText.text += text.toString();
       });
     }
@@ -327,7 +338,7 @@ class _AllChatWidescreen extends State<AllChatWidescreenPage> {
 
   searchMessageChat(String searchKey) async {
     searchMessage.clear();
-    List<MessageDto> res = await chatApi.searchMessage(
+    List<MessageDto> res = await config.server.chatApi.searchMessage(
       searchKey,
       allChats[selectChat],
     );
@@ -374,13 +385,10 @@ class _AllChatWidescreen extends State<AllChatWidescreenPage> {
           fit: BoxFit.cover,
         ),
         Scaffold(
-          backgroundColor: Colors.transparent,
           appBar: AppBar(
-            backgroundColor: config.accentColor,
             automaticallyImplyLeading: false,
             title: searchActive
                 ? TextField(
-                    //controller: _searchController,
                     style: const TextStyle(color: Colors.white),
                     cursorColor: Colors.white,
                     decoration: const InputDecoration(
@@ -481,12 +489,7 @@ class _AllChatWidescreen extends State<AllChatWidescreenPage> {
                       );
                       return;
                     }
-                    await refreshApp();
-                    if (chatApi.eventController.isClosed) {
-                      listenEventChat();
-                    }
-                    downloadChat(allChats[selectChat].messages.length);
-                    setState(() {});
+               downloadChat(allChats[selectChat].messages.length);   
                   },
                   icon: const Icon(Icons.refresh, color: Colors.white54),
                 ),
@@ -498,114 +501,12 @@ class _AllChatWidescreen extends State<AllChatWidescreenPage> {
                 color: Colors.black38,
                 width: MediaQuery.of(context).size.width * 0.4,
                 height: MediaQuery.of(context).size.height - kToolbarHeight,
-                child: RefreshIndicator(
-                  onRefresh: () async {
-                    await chatApi.updateEvent.cancel();
-                    allChats.clear();
-                    Map chatsIsServer = await chatApi.viewAllChat();
-                    PbList<ChatDto> m = chatsIsServer['chats'];
-                    for (var e in m) {
-                      setState(() {
-                        allChats.add(Chat(e));
-                      });
-                    }
-                  },
-                  child: ListView.builder(
+                child: ListView.builder(
                     itemCount: allChats.length,
                     itemBuilder: (context, index) {
                       return ListTile(
                         title: InkWell(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10),
-                              color: index == selectChat
-                                  ? config.accentColor
-                                  : Colors.black54,
-                            ),
-                            child: Column(
-                              children: [
-                                const Padding(padding: EdgeInsets.all(5)),
-                                Row(
-                                  children: [
-                                    const Padding(padding: EdgeInsets.all(5)),
-                                    if (allChats[index].chatImage == '' ||
-                                        allChats[index].chatImage == 'null')
-                                      CircleAvatar(
-                                        child: Icon(
-                                          color:
-                                              Colors.deepPurpleAccent.shade100,
-                                          Icons.person,
-                                        ),
-                                      ),
-                                    if (allChats[index].chatImage.toString() !=
-                                            'null' &&
-                                        allChats[index].chatImage.toString() !=
-                                            '')
-                                      CircleAvatar(
-                                        backgroundImage: NetworkImage(
-                                          allChats[index].chatImage.toString(),
-                                        ),
-                                      ),
-                                    const Padding(padding: EdgeInsets.all(12)),
-                                    Text(
-                                      allChats[index].name,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 22,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                Row(
-                                  children: [
-                                    const Padding(padding: EdgeInsets.all(20)),
-                                    if (allChats[index].messages.isNotEmpty)
-                                      Expanded(
-                                        child: Text(
-                                          '${allChats[index].messages.first.authorName}: ${allChats[index].messages.first.body}',
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 18,
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
-                                          maxLines: 1,
-                                        ),
-                                      ),
-                                    if (allChats[index].messages.isNotEmpty &&
-                                        allChats[index]
-                                            .messages
-                                            .first
-                                            .delivered)
-                                      const Icon(
-                                        Icons.check_sharp,
-                                        color: Colors.white70,
-                                      ),
-                                    if (allChats[index].messages.isNotEmpty &&
-                                        !allChats[index]
-                                            .messages
-                                            .first
-                                            .delivered &&
-                                        allChats[index]
-                                                .messages
-                                                .first
-                                                .authorId !=
-                                            userGlobal.id)
-                                      Text(
-                                        Localization.localizationData[config
-                                                .language]['allChatScreen']['newMessage'] +
-                                            '  ',
-                                        style: const TextStyle(
-                                          color: Colors.red,
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
+                          child: ChatCard(index),
                           onTap: () async {
                             if (index == selectChat) {
                               if (allChats[index].members.length == 2) {
@@ -615,46 +516,44 @@ class _AllChatWidescreen extends State<AllChatWidescreenPage> {
                                     builder: (BuildContext context) => UserPage(
                                       userName:
                                           allChats[index].members.first ==
-                                              userGlobal.userName
+                                              config.server.userGlobal.userName
                                           ? allChats[index].members.last
                                           : allChats[index].members.first,
                                     ),
                                   ),
                                 );
                               } else {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (BuildContext context) =>
-                                        EditGroupPage(
-                                          groupChat: allChats[index],
-                                        ),
-                                  ),
-                                );
+                                List<MemberDto> members = [];
+                        for(String m in allChats[selectChat].members)
+                        {
+members.add(MemberDto(memberUsername: m, memberImage: ''));
+                        }
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (BuildContext context) =>
+                                CreateChatPage(chat: Chat(ChatDto(authorId: allChats[selectChat].authorId.toString(), id: allChats[selectChat].id, name: allChats[selectChat].name, messages: [], members: members, chatImage: allChats[selectChat].chatImage, image: [])),),
+                          ),
+                        );
                               }
                             }
-                            deliveredMessage(allChats[index].id);
-                            if (allChats[index].messages.isNotEmpty) {
-                              if (allChats[index].messages.first.authorId !=
-                                  userGlobal.id) {
-                                setState(() {
-                                  allChats[index].messages.first.delivered =
-                                      true;
-                                });
-                              }
-                            }
-                            setState(() {
+                            else{
+                              final MessageProvider messageProvider = Provider.of<MessageProvider>(context, listen: false);
+                  messageProvider.deliveredMessage(allChats[index].id);
                               selectChat = index;
                               selectChatId = allChats[index].id;
                               initData();
-                            });
+                              scrollDown();
+                            }
+                             
                           },
                         ),
                       );
                     },
                   ),
-                ),
+                
               ),
+             const Padding(padding: EdgeInsetsGeometry.symmetric(horizontal: 5)),
               if (allChats.isNotEmpty)
                 SizedBox(
                   width: MediaQuery.of(context).size.width * 0.5,
@@ -680,7 +579,7 @@ class _AllChatWidescreen extends State<AllChatWidescreenPage> {
                                     if (allChats[selectChat]
                                             .messages[index]
                                             .authorId ==
-                                        userGlobal.id)
+                                        config.server.userGlobal.id)
                                       InkWell(
                                         onLongPress: () {
                                           setState(() {
@@ -690,6 +589,23 @@ class _AllChatWidescreen extends State<AllChatWidescreenPage> {
                                             );
                                           });
                                         },
+                                        onTap: selectedMessages.isNotEmpty
+                                    ? () {
+                                        setState(() {
+                                          if (!selectedMessages.contains(
+                                            allChats[selectChat].messages[index],
+                                          )) {
+                                            selectedMessages.add(
+                                              allChats[selectChat].messages[index],
+                                            );
+                                          } else {
+                                            selectedMessages.remove(
+                                              allChats[selectChat].messages[index],
+                                            );
+                                          }
+                                        });
+                                      }
+                                    : null,
                                         child: Container(
                                           padding: const EdgeInsets.only(
                                             left: 4,
@@ -727,8 +643,31 @@ class _AllChatWidescreen extends State<AllChatWidescreenPage> {
                                     if (allChats[selectChat]
                                             .messages[index]
                                             .authorId !=
-                                        userGlobal.id)
-                                      Container(
+                                        config.server.userGlobal.id)
+                                        InkWell(
+  onTap: selectedMessages.isNotEmpty
+                                    ? () {
+                                        setState(() {
+                                          if (!selectedMessages.contains(
+                                            allChats[selectChat].messages[index],
+                                          )) {
+                                            selectedMessages.add(
+                                              allChats[selectChat].messages[index],
+                                            );
+                                          } else {
+                                            selectedMessages.remove(
+                                              allChats[selectChat].messages[index],
+                                            );
+                                          }
+                                        });
+                                      }
+                                    : null,
+                                onLongPress: () {
+                                  setState(() {
+                                    selectedMessages.add(allChats[selectChat].messages[index]);
+                                  });
+                                },
+                                          child: Container(
                                         padding: const EdgeInsets.only(
                                           left: 4,
                                           right: 4,
@@ -759,6 +698,8 @@ class _AllChatWidescreen extends State<AllChatWidescreenPage> {
                                               .messages[index],
                                         ),
                                       ),
+                                        )
+                                      ,
                                   ],
                                 ),
                               );
@@ -803,32 +744,30 @@ class _AllChatWidescreen extends State<AllChatWidescreenPage> {
                                           CrossAxisAlignment.center,
                                       children: [
                                         IconButton(
-                                          color: config.accentColor,
+                                          
                                           tooltip:
                                               Localization
                                                   .localizationData[config
                                                   .language]['messageScreen']['paste'],
                                           style: TextButton.styleFrom(
-                                            foregroundColor: config.accentColor,
+                                            
                                           ),
                                           icon: Icon(
                                             Icons.paste,
                                             size: 40,
-                                            color: config.accentColor,
+                                            
                                           ),
                                           onPressed: () {
                                             clipboard();
                                           },
                                         ),
-                                        IconButton(
-                                          color: config.accentColor,
+                                        IconButton(                     
                                           style: TextButton.styleFrom(
-                                            foregroundColor: config.accentColor,
                                           ),
                                           icon: Icon(
                                             Icons.insert_emoticon_sharp,
                                             size: 40,
-                                            color: config.accentColor,
+                                            
                                           ),
                                           onPressed: () {
                                             setState(() {
@@ -837,20 +776,16 @@ class _AllChatWidescreen extends State<AllChatWidescreenPage> {
                                           },
                                         ),
                                         IconButton(
-                                          color: config.accentColor,
                                           style: TextButton.styleFrom(
-                                            foregroundColor: config.accentColor,
                                           ),
                                           icon: filesPick.isEmpty
                                               ? Icon(
                                                   Icons.add_a_photo_outlined,
                                                   size: 40,
-                                                  color: config.accentColor,
                                                 )
                                               : Icon(
                                                   Icons.delete_forever,
                                                   size: 40,
-                                                  color: config.accentColor,
                                                 ),
                                           onPressed: () {
                                             if (filesPick.isNotEmpty) {
@@ -862,22 +797,17 @@ class _AllChatWidescreen extends State<AllChatWidescreenPage> {
                                             pickFile();
                                           },
                                         ),
-                                        Container(
+                                        Expanded(child: Container(
                                           padding: const EdgeInsets.only(
                                             left: 6,
                                           ),
-                                          height:
-                                              MediaQuery.of(
-                                                    context,
-                                                  ).size.height *
-                                                  0.16 -
-                                              kToolbarHeight,
-                                          width: parentWidth / 1.7,
                                           child: Column(
                                             mainAxisAlignment:
                                                 MainAxisAlignment.center,
                                             children: [
                                               TextField(
+                                                
+                                                textInputAction: TextInputAction.send,
                                                 style: Theme.of(
                                                   context,
                                                 ).textTheme.titleSmall,
@@ -888,16 +818,17 @@ class _AllChatWidescreen extends State<AllChatWidescreenPage> {
                                                     TextInputType.multiline,
                                                 maxLines: 4,
                                                 onChanged: (String value) {
-                                                  if (value.contains('\n') &&
-                                                      !config.sendHotkeyCtrl) {
-                                                    sendMessage();
-                                                  }
+                                                  
                                                   message = value;
                                                 },
+                                                 onSubmitted: (value)async {
+    await sendMessage();
+  },
                                               ),
                                             ],
                                           ),
-                                        ),
+                                        ))
+                                        ,
                                         const Padding(
                                           padding: EdgeInsets.all(10),
                                         ),
@@ -916,7 +847,7 @@ class _AllChatWidescreen extends State<AllChatWidescreenPage> {
                                                 child: Icon(
                                                   Icons.send,
                                                   size: 40,
-                                                  color: config.accentColor,
+                                                  
                                                 ),
                                               ),
                                       ],
@@ -936,149 +867,13 @@ class _AllChatWidescreen extends State<AllChatWidescreenPage> {
                                       borderRadius: BorderRadius.circular(5),
                                     ),
                                     child: AudioRecorderPage(
+                                      updateParent: updateParent,
                                       chatId: allChats[selectChat].id,
                                     ),
                                   ),
                                 if (selectedMessages.isNotEmpty &&
                                     !replyMessage)
-                                  Container(
-                                    height:
-                                        MediaQuery.of(context).size.height *
-                                            0.15 -
-                                        kToolbarHeight,
-                                    padding: const EdgeInsets.only(
-                                      left: 4,
-                                      right: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.black54,
-                                      borderRadius: BorderRadius.circular(5),
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceAround,
-                                      children: [
-                                        IconButton(
-                                          onPressed: () {
-                                            setState(() {
-                                              selectedMessages.clear();
-                                            });
-                                          },
-                                          iconSize: 40,
-                                          icon: Icon(
-                                            Icons.highlight_remove,
-                                            color: config.accentColor,
-                                          ),
-                                        ),
-                                        if (selectedMessages.length == 1)
-                                          IconButton(
-                                            onPressed: () {
-                                              setState(() {
-                                                replyMessage = true;
-                                              });
-                                            },
-                                            icon: Icon(
-                                              Icons.reply,
-                                              color: config.accentColor,
-                                            ),
-                                            iconSize: 40,
-                                          ),
-                                        IconButton(
-                                          onPressed: () async {
-                                            for (var item in selectedMessages) {
-                                              Map res = await chatApi
-                                                  .removeMessage(item);
-                                              if (res.keys.first == 'Error') {
-                                                infoDialog(
-                                                  context,
-                                                  res['Error'],
-                                                );
-                                              } else {
-                                                setState(() {
-                                                  allChats[selectChat].messages
-                                                      .removeWhere(
-                                                        (element) =>
-                                                            element.id == item,
-                                                      );
-                                                });
-                                              }
-                                            }
-                                            setState(() {
-                                              selectedMessages.clear();
-                                            });
-                                          },
-                                          icon: const Icon(
-                                            Icons.delete_forever,
-                                          ),
-                                          iconSize: 40,
-                                          color: config.accentColor,
-                                        ),
-                                        IconButton(
-                                          onPressed: () async {
-                                            List<MessageDto> m = [];
-                                            for (Message mes
-                                                in selectedMessages) {
-                                              m.add(
-                                                MessageDto(
-                                                  id: mes.id,
-                                                  body: mes.body,
-                                                  authorId: mes.authorId,
-                                                  authorName: mes.authorName,
-                                                  delivered: mes.delivered,
-                                                  content: [],
-                                                  stickerContent: 0,
-                                                  dateMessage: DateTime.now()
-                                                      .toString(),
-                                                  reaction: [],
-                                                  forwarded: mes.forwarded,
-                                                  originalAuthor:
-                                                      mes.originalAuthor,
-                                                  originalDate: DateTime.now()
-                                                      .toString(),
-                                                ),
-                                              );
-                                            }
-                                            await Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder:
-                                                    (
-                                                      BuildContext context,
-                                                    ) => ForwardedMessagePage(
-                                                      forwardedChat: Chat(
-                                                        ChatDto(
-                                                          messages: m,
-                                                          id: allChats[selectChat]
-                                                              .id,
-                                                          name:
-                                                              allChats[selectChat]
-                                                                  .name,
-                                                          authorId:
-                                                              allChats[selectChat]
-                                                                  .authorId
-                                                                  .toString(),
-                                                          chatImage:
-                                                              allChats[selectChat]
-                                                                  .chatImage,
-                                                          members: [],
-                                                        ),
-                                                      ),
-                                                    ),
-                                              ),
-                                            );
-                                            setState(() {
-                                              selectedMessages.clear();
-                                            });
-                                          },
-                                          icon: Icon(
-                                            Icons.arrow_circle_right_outlined,
-                                            color: config.accentColor,
-                                          ),
-                                          iconSize: 40,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
+MessageMenu(context, updateParent: updateParent, activateReplyMessage: activateReplyMessage, removeMessages: removeMessages,), 
                                 if (stickerPick)
                                   SendSticker(
                                     updateParent: updateParent,
@@ -1091,7 +886,11 @@ class _AllChatWidescreen extends State<AllChatWidescreenPage> {
                       ),
                     ],
                   ),
-                ),
+                ), 
+
+              if(bottomButtonView)
+              IconButton(onPressed: (){scrollDown();}, icon: Icon(Icons.arrow_drop_down_circle_outlined,
+                    ))
             ],
           ),
           floatingActionButton: ActionButton(updateParent: updateParent),

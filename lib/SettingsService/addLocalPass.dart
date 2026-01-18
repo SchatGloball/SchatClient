@@ -26,7 +26,7 @@ bool validPass = false;
       });
       return;
     }
-    if(pass.length<4)
+    if(pass.length<4||pass.length>7||pass.split('').first =='0')
       {
         setState(() {
           validPass = false;

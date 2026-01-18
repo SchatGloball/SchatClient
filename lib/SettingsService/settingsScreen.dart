@@ -1,7 +1,13 @@
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:schat2/SettingsService/languageSwitcher.dart';
+import 'package:schat2/SettingsService/notificatioSwitcher.dart';
 import 'package:schat2/SettingsService/pickBackground.dart';
+import 'package:schat2/SettingsService/serverPick.dart';
+import 'package:schat2/SettingsService/themeSwitcher.dart';
+import 'package:schat2/theme/themeProvider.dart';
 import '../allWidgets/infoDialog.dart';
 import '../env.dart';
 import '../eventStore.dart';
@@ -20,49 +26,56 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPage extends State<SettingsPage> {
   Color currentColor = config.accentColor;
   Color pickerColor = config.accentColor;
+ 
+
   void changeColor(Color color) {
-    setState(() => config.accentColor = color);
+    setState(() {
+      config.accentColor = color;
+      pickerColor = color;
+    });
   }
 
-  List servers = [];
+refreshData()
+{
+  setState(() {
+    
+  });
+}
 
   @override
   void initState() {
     super.initState();
 
-    getServers();
   }
 
-  getServers() async {
-    List res = await storage.getServers();
-    setState(() {
-      servers = res;
-    });
+ @override
+  void dispose() {
+    super.dispose();
   }
 
-  updateLocalization(String newLocalization) async {
-    setState(() {
-      config.language = newLocalization;
-    });
 
-    await storage.setConfig();
-  }
 
   updateApp() async {
-    Map res = await chatApi.updateApp();
+    Map res = await config.server.chatApi.updateApp();
     if (res.keys.contains('Error')) {
       infoDialog(context, res['Error']);
       return;
     }
     String? directoryPath = await FilePicker.platform.getDirectoryPath();
-    print('$directoryPath/${res['name']}');
     File file = File('$directoryPath/${res['name']}');
     await file.writeAsBytes(res['data']);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
+    return 
+    LayoutBuilder(
+      builder: (context, constraints) {
+        final screenSize = MediaQuery.of(context).size;
+                double size = screenSize.width > screenSize.height?config.maxHeightWidescreen:0.95;
+
+        return
+    Stack(
       children: [
         Image.asset(
           'assets/${config.backgroundAsset}',
@@ -72,285 +85,97 @@ class _SettingsPage extends State<SettingsPage> {
         ),
         Scaffold(
           appBar: AppBar(
-            backgroundColor: config.accentColor,
-            leading: BackButton(
-              color: Colors.white54,
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            automaticallyImplyLeading: false,
           ),
-          backgroundColor: Colors.transparent,
-          body: ListView(
+          body: Center(child: SizedBox(
+            width: MediaQuery.of(context).size.width * size,
+            child: ListView(
             padding: const EdgeInsets.all(10),
             children: [
-              Container(
-                color: Colors.black54,
-                child: Column(
-                  children: [
-                    Center(
-                      child: Text(
-                        Localization.localizationData[config
-                            .language]['settingsScreen']['language'],
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    SizedBox(
-                      height: MediaQuery.of(context).size.height / 10,
-                      child: ListView.builder(
-                        itemCount: Localization.localizationData.keys
-                            .toList()
-                            .length,
-                        itemBuilder: (context, index) {
-                          return InkWell(
-                            onTap: () {
-                              updateLocalization(
-                                Localization.localizationData.keys
-                                    .toList()[index],
-                              );
-                            },
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: [
-                                Text(
-                                  Localization.localizationData.keys
-                                      .toList()[index],
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                if (config.language ==
-                                    Localization.localizationData.keys
-                                        .toList()[index])
-                                  const Icon(
-                                    Icons.check_box_outlined,
-                                    color: Colors.green,
-                                  ),
-                                if (config.language !=
-                                    Localization.localizationData.keys
-                                        .toList()[index])
-                                  const Icon(
-                                    Icons.check_box_outline_blank_outlined,
-                                    color: Colors.white,
-                                  ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-
-                    Center(
-                      child: Text(
-                        Localization.localizationData[config
-                            .language]['settingsScreen']['selectServer'],
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    SizedBox(
-                      height:
-                          (MediaQuery.of(context).size.height / 8) *
-                          servers.length,
-                      child: Column(
-                        children: [
-                          SizedBox(
-                            height:
-                                (MediaQuery.of(context).size.height / 15) *
-                                servers.length,
-                            child: ListView.builder(
-                              itemCount: servers.length,
-                              itemBuilder: (context, index) {
-                                return Card(
-                                  color: Colors.white10,
-                                  child: Row(
-                                    children: [
-                                      Text(
-                                        servers[index],
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 22,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      IconButton(
-                                        onPressed: () async {
-                                          deleteServerDialog(context, index);
-                                        },
-                                        icon: const Icon(
-                                          Icons.delete,
-                                          color: Colors.red,
-                                        ),
-                                      ),
-                                      if (index == 0)
-                                        const Icon(
-                                          Icons.check_box_outlined,
-                                          color: Colors.green,
-                                        ),
-                                      if (index != 0)
-                                        IconButton(
-                                          onPressed: () async {
-                                            await storage.selectServer(index);
-                                            await getServers();
-                                            connect();
-                                          },
-                                          icon: const Icon(
-                                            Icons
-                                                .check_box_outline_blank_outlined,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
+              Column(
+                children: [
+                  InkWell(child: 
+                  Container(
+                        padding: EdgeInsets.symmetric(vertical: 8, horizontal: MediaQuery.of(context).size.width* 0.05),
+                        decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(config.containerRadius)), child: Center(child:  
+                        Text(getLocalizedString('colorsPick'), style: Theme.of(context).textTheme.titleLarge,)),),
+                        onTap: (){ pickColor(context);},
+                        )
+                  ,
+                  const Padding(
+                    padding: EdgeInsetsGeometry.symmetric(vertical: 2),
+                  ),
+              
+                  InkWell(child: 
+                  Container(
+                        padding: EdgeInsets.symmetric(vertical: 8, horizontal: MediaQuery.of(context).size.width* 0.05),
+                        decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(config.containerRadius)), child: Center(child:  
+                        Text(getLocalizedString('pickBackground'), style: Theme.of(context).textTheme.titleLarge,)),),
+                        onTap: ()async{  await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (BuildContext context) =>
+                                PickBackground(),
                           ),
-                          ElevatedButton(
-                            onPressed: () {
-                              addServerDialog(context);
-                            },
-                            child: const Icon(Icons.add),
+                        );
+                        setState(() {});},
+                        ),
+                  
+                  const Padding(
+                    padding: EdgeInsetsGeometry.symmetric(vertical: 2),
+                  ),
+                  InkWell(child: 
+                  Container(
+                        padding: EdgeInsets.symmetric(vertical: 8, horizontal: MediaQuery.of(context).size.width* 0.05),
+                        decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(config.containerRadius)), child: Center(child:  
+                        Text(getLocalizedString('addLocalPass'), style: Theme.of(context).textTheme.titleLarge,)),),
+                        onTap: ()async{  await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (BuildContext context) =>
+                                const AddLocalPass(),
                           ),
-                        ],
-                      ),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        Text(
-                          Localization.localizationData[config
-                              .language]['settingsScreen']['notification'],
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        );},
                         ),
-                        InkWell(
-                          child: config.notification
-                              ? const Icon(
-                                  Icons.check_box_outlined,
-                                  color: Colors.green,
-                                )
-                              : const Icon(
-                                  Icons.check_box_outline_blank_outlined,
-                                  color: Colors.white,
-                                ),
-                          onTap: () async {
-                            setState(() {
-                              config.notification = !config.notification;
-                            });
-                            await storage.setConfig();
-                          },
+                        const Padding(
+                    padding: EdgeInsetsGeometry.symmetric(vertical: 2),
+                  ),
+                  InkWell(child: 
+                  Container(
+                        padding: EdgeInsets.symmetric(vertical: 8, horizontal: MediaQuery.of(context).size.width* 0.05),
+                        decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(config.containerRadius)), child: Center(child:  
+                        Text(getLocalizedString('selectServer'), style: Theme.of(context).textTheme.titleLarge,)),),
+                        onTap: ()async{   await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (BuildContext context) =>  const ServerPick()));},
                         ),
-                      ],
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        Text(
-                          Localization.localizationData[config
-                              .language]['settingsScreen']['send'],
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        InkWell(
-                          child: config.sendHotkeyCtrl
-                              ? const Icon(
-                                  Icons.check_box_outlined,
-                                  color: Colors.green,
-                                )
-                              : const Icon(
-                                  Icons.check_box_outline_blank_outlined,
-                                  color: Colors.white,
-                                ),
-                          onTap: () async {
-                            setState(() {
-                              config.sendHotkeyCtrl = !config.sendHotkeyCtrl;
-                            });
-                            await storage.setConfig();
-                          },
-                        ),
-                      ],
-                    ),
-                    const Padding(
-                      padding: EdgeInsetsGeometry.symmetric(vertical: 2),
-                    ),
-                    Center(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          pickColor(context);
-                        },
-                        child: Text(
-                          Localization.localizationData[config
-                              .language]['settingsScreen']['color'],
-                        ),
-                      ),
-                    ),
-                    const Padding(
-                      padding: EdgeInsetsGeometry.symmetric(vertical: 2),
-                    ),
-                    Center(
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (BuildContext context) =>
-                                  PickBackground(),
-                            ),
-                          );
-                          setState(() {});
-                        },
-                        child: Text(
-                          Localization.localizationData[config
-                              .language]['settingsScreen']['pickBackground'],
-                        ),
-                      ),
-                    ),
-                    const Padding(
-                      padding: EdgeInsetsGeometry.symmetric(vertical: 2),
-                    ),
-                    Center(
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (BuildContext context) =>
-                                  const AddLocalPass(),
-                            ),
-                          );
-                        },
-                        child: Text(
-                          Localization.localizationData[config
-                              .language]['settingsScreen']['addLocalPass'],
-                        ),
-                      ),
-                    ),
-                    const Padding(
-                      padding: EdgeInsetsGeometry.symmetric(vertical: 2),
-                    ),
-                  ],
-                ),
+                        const Padding(
+                    padding: EdgeInsetsGeometry.symmetric(vertical: 2),
+                  ),
+                  
+              LanguageSwitcher(updateParent: refreshData,),
+              const Padding(
+                    padding: EdgeInsetsGeometry.symmetric(vertical: 2),
+                  ),
+              ThemeSwitcher(updateParent: refreshData,),
+               const Padding(
+                    padding: EdgeInsetsGeometry.symmetric(vertical: 2),
+                  ),
+              NotificationSwitcher(),
+                                     
+              
+                  const Padding(
+                    padding: EdgeInsetsGeometry.symmetric(vertical: 2),
+                  ),
+                 
+                  const Padding(
+                    padding: EdgeInsetsGeometry.symmetric(vertical: 2),
+                  ),
+                ],
               ),
 
               Text(
-                'Версия приложения: ${Env.version}\nДата сборки: 21.07.2025',
+                'Версия приложения: ${Env.version}\nДата сборки: 01.12.2025',
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               Center(
@@ -361,86 +186,27 @@ class _SettingsPage extends State<SettingsPage> {
                   },
                 ),
               ),
+              
             ],
           ),
+          ),) 
+          
+          ,
         ),
       ],
     );
   }
-
-  addServerDialog(BuildContext context) {
-    showDialog(
-      barrierColor: Colors.white12,
-      context: context,
-      builder: (BuildContext context) {
-        String server = '';
-        return AlertDialog(
-          backgroundColor: Colors.black87,
-          content: TextField(
-            onChanged: (value) {
-              server = value;
-            },
-            decoration: InputDecoration(
-              labelStyle: Theme.of(context).textTheme.titleLarge,
-              border: const OutlineInputBorder(
-                borderSide: BorderSide(color: Colors.white),
-              ),
-              labelText:
-                  Localization.localizationData[config
-                      .language]['settingsScreen']['exampleServer'],
-            ),
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('OK'),
-              onPressed: () async {
-                await storage.setServer(server);
-                await getServers();
-                Navigator.pop(context);
-              },
-            ),
-          ],
-        );
-      },
     );
+    
+    
   }
 
-  deleteServerDialog(BuildContext context, int index) {
-    showDialog(
-      barrierColor: Colors.white12,
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: Colors.black87,
-          content: Text(
-            Localization.localizationData[config
-                .language]['settingsScreen']['deleteServer'],
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('OK'),
-              onPressed: () async {
-                await storage.deleteServer(index);
-                await getServers();
-                Navigator.pop(context);
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
 
   pickColor(BuildContext context) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
+        
         return AlertDialog(
           backgroundColor: Colors.black87,
           actions: <Widget>[
@@ -453,9 +219,12 @@ class _SettingsPage extends State<SettingsPage> {
                       .language]['settingsScreen']['select'],
                 ),
                 onPressed: () async {
-                  setState(() => currentColor = pickerColor);
+                  final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+                  config.accentColor = pickerColor;
+                  themeProvider.updateAccentColor(pickerColor);
                   await storage.setConfig();
                   Navigator.of(context).pop();
+                  setState(() {});
                 },
               ),
             ),

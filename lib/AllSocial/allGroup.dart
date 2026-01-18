@@ -20,7 +20,6 @@ class _AllGroupsPage extends State<AllGroupsPage> {
     downloadGroups();
   }
 
-  //late StreamSubscription streamSubscription;
 
   @override
   void dispose() {
@@ -30,7 +29,7 @@ class _AllGroupsPage extends State<AllGroupsPage> {
 
   downloadGroups() async {
     groups.clear();
-    ListChannelsDto c = await socialApi.getUserGroups(0);
+    ListChannelsDto c = await config.server.socialApi.getUserGroups(0);
     for (ChannelDto channel in c.channels) {
       groups.add(Group(channel));
     }
@@ -39,7 +38,13 @@ class _AllGroupsPage extends State<AllGroupsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
+    return 
+     LayoutBuilder(
+      builder: (context, constraints) {
+        final screenSize = MediaQuery.of(context).size;
+        double size = screenSize.width > screenSize.height?config.maxHeightWidescreen:0.95;
+    return
+    Stack(
       children: [
         Image.asset(
           'assets/${config.backgroundAsset}',
@@ -48,7 +53,7 @@ class _AllGroupsPage extends State<AllGroupsPage> {
           fit: BoxFit.cover,
         ),
         Scaffold(
-          backgroundColor: Colors.transparent,
+          
           appBar: AppBar(
             leading: BackButton(
               color: Colors.white54,
@@ -56,7 +61,6 @@ class _AllGroupsPage extends State<AllGroupsPage> {
                 Navigator.of(context).pop();
               },
             ),
-            backgroundColor: config.accentColor,
             automaticallyImplyLeading: false,
             title: Text(
               'Schat social',
@@ -80,7 +84,11 @@ class _AllGroupsPage extends State<AllGroupsPage> {
               ),
             ],
           ),
-          body: RefreshIndicator(
+          body: 
+          
+          Center(child: SizedBox(
+            width: MediaQuery.of(context).size.width * size,
+            child: RefreshIndicator(
             onRefresh: () async {},
             child: ListView.separated(
               itemCount: groups.length,
@@ -120,15 +128,20 @@ class _AllGroupsPage extends State<AllGroupsPage> {
                             const Padding(
                               padding: EdgeInsets.symmetric(horizontal: 3),
                             ),
-                            Text(
+                            Expanded(child: Text(
                               groups[index].name,
                               style: Theme.of(context).textTheme.titleMedium,
-                            ),
+                              overflow: TextOverflow.ellipsis,
+                              
+                            ))
+                            ,
                           ],
                         ),
                         Text(
-                          groups[index].topik.toString(),
+                          groups[index].topikList.toString(),
                           style: Theme.of(context).textTheme.titleSmall,
+                          overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
                         ),
                       ],
                     ),
@@ -142,6 +155,8 @@ class _AllGroupsPage extends State<AllGroupsPage> {
               },
             ),
           ),
+          ),)
+          ,
           floatingActionButton: FloatingActionButton(
             backgroundColor: Colors.black54,
             onPressed: () async {
@@ -153,7 +168,7 @@ class _AllGroupsPage extends State<AllGroupsPage> {
                       ChannelDto(
                         id: -1,
                         name: '',
-                        authorId: userGlobal.id,
+                        authorId: config.server.userGlobal.id,
                         posts: [],
                         channelImage: '',
                         members: [],
@@ -166,10 +181,10 @@ class _AllGroupsPage extends State<AllGroupsPage> {
                 ),
               );
             },
-            child: Icon(Icons.add_box_outlined, color: config.accentColor),
+            child: Icon(Icons.add_box_outlined),
           ),
         ),
       ],
-    );
+    );});
   }
 }

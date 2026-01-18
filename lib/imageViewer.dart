@@ -38,7 +38,11 @@ Navigator.of(context).pop();}
 ),
 automaticallyImplyLeading: false,
   actions: [
-    IconButton(onPressed: (){downloadFile(image.split('?X').first.split('.').last, image);}, icon: const Icon(Icons.save))
+    IconButton(onPressed: (){
+      downloadFile(
+      fileExtension: image.split('?X').first.split('.').last,
+      url:  image
+      );}, icon: const Icon(Icons.save))
   ],
 ),
 backgroundColor: Colors.transparent,

@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:schat2/DataClasses/Topik.dart';
 import 'package:schat2/allWidgets/infoDialog.dart';
 import '../DataClasses/Group.dart';
 import '../DataClasses/file.dart';
@@ -59,23 +60,23 @@ class _CreateGroupPage extends State<CreateGroupPage> {
     });
   }
 
-  String topik = '';
+ String topikString = '';
   String tags = '';
 
 
   initEditGroup()
   {
-    for(String t in group.topik)
-      {
-        topik = '$topik $t';
-      }
+    for(String t in group.topikList)
+   {
+    topikString = '$topikString $t';
+   }
     for(String t in group.tags)
     {
       tags = '$tags $t';
     }
 
     nameController.text = group.name;
-    topiksController.text = topik;
+    topiksController.text = topikString;
     tagsController.text = tags;
     setState(() {
 
@@ -84,11 +85,14 @@ class _CreateGroupPage extends State<CreateGroupPage> {
 
   createGroup()async
   {
-    if(topik.isNotEmpty)
+    if(topikString.isNotEmpty)
     {
       final RegExp pattern = RegExp(r'\.|,');
-      topik =  topik.replaceAll(pattern, '');
-      group.topik = topik.split(' ');
+      topikString =  topikString.replaceAll(pattern, '');
+      for(String t in topikString.split(' '))
+      {
+        group.topik.add(Topik(t));
+      }
     }
     if(tags.isNotEmpty)
       {
@@ -100,11 +104,11 @@ class _CreateGroupPage extends State<CreateGroupPage> {
       late ResponseDto res;
       if(group.id!=-1)
         {
-          res = await socialApi.editGroup(group, filePick);
+          res = await config.server.socialApi.editGroup(group, filePick);
         }
       else
         {
-         res = await socialApi.createGroup(group, filePick);
+         res = await config.server.socialApi.createGroup(group, filePick);
         }
 
       if(res.success)
@@ -179,7 +183,7 @@ class _CreateGroupPage extends State<CreateGroupPage> {
                         TextField(
                           controller: topiksController,
                           onChanged: (String value) {
-                            topik = value;
+                            topikString = value;
                           },
                           decoration: InputDecoration(
                             labelText: 'Topiks',

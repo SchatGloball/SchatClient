@@ -4,6 +4,7 @@ import 'package:schat2/DataClasses/file.dart';
 import 'package:schat2/generated/chats.pb.dart';
 import '../eventStore.dart';
 
+// ignore: must_be_immutable
 class SendReaction extends StatelessWidget {
   String message = '';
   List<FileData> filesPick = [];
@@ -15,14 +16,14 @@ class SendReaction extends StatelessWidget {
       ReactionMessageDto(
         id: 0,
         body: message,
-        authorId: userGlobal.id,
-        authorName: userGlobal.userName,
+        authorId: config.server.userGlobal.id,
+        authorName: config.server.userGlobal.userName,
         messageId: messageId,
         stickerContent: 0,
         dateReaction: DateTime.now().toString(),
       ),
     );
-    Map send = await chatApi.sendReaction(req);
+    Map send = await config.server.chatApi.sendReaction(req);
     if (send.keys.first == 'Error') {
       //  infoDialog(context, send['Error']);
     } else {
@@ -56,20 +57,16 @@ class SendReaction extends StatelessWidget {
             onPressed: () {
               updateParent();
             },
-            icon: Icon(Icons.clear_outlined, color: config.accentColor),
+            icon: Icon(Icons.clear_outlined),
             iconSize: 40,
           ),
-          Container(
-            padding: const EdgeInsets.only(left: 6),
-            height: MediaQuery.of(context).size.height * 0.16 - kToolbarHeight,
-            width: MediaQuery.of(context).size.width / 3,
+          Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 TextField(
                   style: Theme.of(context).textTheme.titleLarge,
                   cursorColor: config.accentColor,
-                  //controller: fieldText,
                   minLines: 1,
                   keyboardType: TextInputType.multiline,
                   maxLines: 2,
@@ -85,7 +82,7 @@ class SendReaction extends StatelessWidget {
             onTap: () async {
               sendReaction();
             },
-            child: Icon(Icons.send, size: 40, color: config.accentColor),
+            child: Icon(Icons.send, size: 40),
           ),
         ],
       ),

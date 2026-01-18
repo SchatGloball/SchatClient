@@ -1,91 +1,105 @@
-import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter_localization/flutter_localization.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:permission_handler/permission_handler.dart';
-
 import 'package:flutter/material.dart';
-
 import 'package:lottie/lottie.dart';
+import 'package:provider/provider.dart';
+import 'package:schat2/DataClasses/configuration.dart';
 import 'package:schat2/WidescreenChat/chatAll.dart';
-import 'package:schat2/appTheme.dart';
-
+import 'package:schat2/AllChatService/messageProvider.dart';
+import 'package:schat2/theme/themeProvider.dart';
 import 'AllChatService/allChat.dart';
 import 'AllChatService/backgroundWork.dart';
-import 'DataClasses/UserData.dart';
+
 import 'LoginService/login.dart';
 import 'calc.dart';
 import 'eventStore.dart';
+import 'dart:io';
+
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
-  try {
-    if (Platform.isAndroid) {
-      await Permission.storage.request();
-      await Permission.notification.request();
-      startBackground();
-    }
-    if (Platform.isLinux || Platform.isWindows) {
-      // await hotKeySystem.unregisterAll();
-    }
-  } catch (e) {
-    config.isWeb = true;
-  }
-  await storage.initDataBase();
-  Map configuration = await storage.getAppConfig();
-  print(configuration);
-  config.addConfig(configuration);
-  await connect();
 
-  runApp(
-    MaterialApp(
-      home: InitialApp(checkLocalPass: true),
-      darkTheme: darkTheme,
-      themeMode: ThemeMode.dark,
-    ),
-  );
-
-  // runApp(MaterialApp(
-  //   home: TestPage(),
-  //   darkTheme: darkTheme,
-  //   themeMode: ThemeMode.dark,
-  // ));
-  // await storage.initDataBase();
-  // await storage.getAppConfig();
-  // final Directory appDocumentsDir = await getApplicationDocumentsDirectory();
-  // print(appDocumentsDir.path);
-}
-
-class RoutingManager {
-  refreshToken() async {
+  // Определяем isWeb до создания config, чтобы избежать циклической зависимости
+  bool isWebValue = kIsWeb;
+  
+  // Запрашиваем разрешения только на Android (не на веб)
+  if (!isWebValue) {
     try {
-      await userGlobal.getTokens();
-      if (userGlobal.refreshToken == '') {
-        return false;
-      } else {
-        // await connect();
-        Map tokens = await userApi.refreshToken(userGlobal.refreshToken);
-        print(tokens);
-        userGlobal.setTokens(tokens['accessToken'], tokens['refreshToken']);
-        if (tokens.keys.first == 'Error') {
-          userGlobal.clearTokens();
-          return false;
-        } else {
-          final Map u = await userApi.fetchUser();
-          userGlobal = User(
-            u['user'].id,
-            u['user'].username,
-            u['user'].imageAvatar,
-          );
-          userGlobal.setTokens(tokens['accessToken'], tokens['refreshToken']);
-          return true;
+      // ignore: undefined_identifier
+      if (Platform.isAndroid) {
+        await Permission.storage.request();
+        await Permission.notification.request();
+        
+        // Запрашиваем игнорирование оптимизации батареи для надежной работы фоновых задач
+        try {
+          bool isIgnoringBatteryOptimizations = await Permission.ignoreBatteryOptimizations.isGranted;
+          if (!isIgnoringBatteryOptimizations) {
+            await Permission.ignoreBatteryOptimizations.request();
+          }
+        } catch (e) {
+          print('Battery optimization permission request skipped: ${e.toString()}');
         }
+        
+        startBackground();
       }
     } catch (e) {
-      print(e.toString());
-      return false;
+      // Если произошла ошибка, просто продолжаем
+      print('Permission request skipped: ${e.toString()}');
     }
   }
+ 
+  await storage.initDataBase(isWebValue, false);
+  Map configuration = await storage.getAppConfig();
+  config = Configuration(configuration, isWeb: isWebValue);
+  // FlutterLocalization не поддерживает веб-платформу, инициализируем только для нативных платформ
+  if (!isWebValue) {
+    try {
+      await FlutterLocalization.instance.ensureInitialized();
+    } catch (e) {
+      print('FlutterLocalization initialization error: ${e.toString()}');
+    }
+  }
+
+  runApp(
+    // Обертываем всё приложение в провайдер
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) => ThemeProvider(),
+        ),
+
+        ChangeNotifierProvider(
+          create: (_) => MessageProvider(),
+        ),
+        
+      ],
+      child: MyApp(),
+    ),
+  );
 }
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return MaterialApp(
+          home: InitialApp(checkLocalPass: true),
+          // Используем тему из провайдера
+          darkTheme: themeProvider.themeData,
+          theme: themeProvider.themeData,
+          themeMode: config.isDarkTheme ? ThemeMode.dark : ThemeMode.light,
+        );
+      },
+    );
+  }
+}
+
 
 class InitialApp extends StatefulWidget {
   late bool checkLocalPass;
@@ -103,40 +117,85 @@ class _InitialApp extends State<InitialApp> {
   @override
   void initState() {
     super.initState();
-    userLoginScreen();
-    notification.init();
+//запуск только после отрисовки виджета
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      notification.init();
+      userLoginScreen();
+    });
   }
+bool localPassCheck = true;
 
-  userLoginScreen() async {
-    bool check = await RoutingManager().refreshToken();
-    if (config.localPass != '' && checkLocalPass) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const CalcButton()),
-      );
-      return;
-    }
-    if (!check) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const Login()),
-      );
-    } else {
-      if (config.widescreen == true) {
-        Navigator.pushReplacement(
+
+
+   void userLoginScreen() async {
+    if(config.localPass.isNotEmpty)
+    {
+      localPassCheck = false;
+      try{
+localPassCheck = await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => const AllChatWidescreenPage(),
+            builder: (context) => const CalcButton(),
           ),
         );
-      } else {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const AllChatPage()),
-        );
+      }
+      catch(e)
+      {
+userLoginScreen();
+return;
       }
     }
+
+bool checkTokens = await config.server.refreshTokens();
+if(checkTokens&&localPassCheck)
+{
+  goToChat();
+}
+else
+{
+  try{
+    bool successLogin = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const Login(),
+          ),
+        );
+        if(successLogin)
+        {
+          goToChat();
+        }
+        else{
+userLoginScreen();
+return;
+        }
   }
+  catch(e)
+  {
+userLoginScreen();
+return;
+  }
+}
+  }
+
+ goToChat() async {
+  await config.server.fetchUser();
+  
+  if (config.widescreen) {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const AllChatWidescreenPage(),
+      ),
+    );
+  } else {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const AllChatPage(),
+      ),
+    );
+  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -156,32 +215,4 @@ class _InitialApp extends State<InitialApp> {
   }
 }
 
-// class TestPage extends StatefulWidget {
-//   TestPage({super.key});
-//   @override
-//   State<TestPage> createState() => _TestPage();
-// }
-// class _TestPage extends State<TestPage> with TickerProviderStateMixin {
-//   @override
-//   void initState() {
-//    permission();
-//   }
-//   permission()async
-//   { PermissionStatus m = await Permission.photos.request();
-//   print(m);
-//   }
-//   @override
-//   void dispose() {
-//         super.dispose();
-//   }
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return
-//       LayoutBuilder(
-//         builder: (context, constraints) {
-//           return Scaffold(
-//             body: Text('data'),
-//           );
-//     });}
-// }
+

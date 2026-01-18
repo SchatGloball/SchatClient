@@ -1,5 +1,7 @@
+import 'package:schat2/DataClasses/Post.dart';
+import 'package:schat2/DataClasses/Topik.dart';
+
 import '../generated/social.pb.dart';
-import 'Post.dart';
 
 class Group
 {
@@ -14,23 +16,37 @@ for(var m in  c.members)
   {
     members.add(m.memberUsername);
   }
-topik = c.topik;
+  for(var m in  c.topik)
+  {
+   topik.add(Topik(m));
+  }
 for(PostDto p in c.posts)
   {
-   // posts.add(PostData(p));
+    for(Topik t in topik)
+    {
+      if(t.name == p.topik)
+      {
+        t.posts.add(PostData(p));
+      }
+    }
   }
-for(String t in c.topik)
-{
-  posts[t] = [];
-}
   }
   late final int id;
   late String name;
   late final int authorId;
-  //List<PostData> posts = [];
   List<String> tags = [];
   List<String> members = [];
-  List<String> topik = [];
+  List<Topik> topik = [];
   late String image;
-  Map<String, List> posts = {};
+
+  List<String>  get topikList
+  {
+    List<String> res = [];
+    for(Topik t in topik)
+    {
+      res.add(t.name);
+    }
+    return res;
+  }
+ // Map<String, List> posts = {};
 }

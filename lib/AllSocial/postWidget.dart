@@ -35,7 +35,7 @@ class _PostWidget extends State<PostWidget> {
 
   updateData()async
   {
-    PostDto p = await socialApi.getOnePost(post.id);
+    PostDto p = await config.server.socialApi.getOnePost(post.id);
     setState(() {
       post = PostData(p);
     });
@@ -104,15 +104,11 @@ class _PostWidget extends State<PostWidget> {
                 physics: const NeverScrollableScrollPhysics(),
                 // запрещает прокрутку списка
               ),
-              GridView.builder(
+              ListView.builder(
                 itemCount: post.audioContent.length,
                 itemBuilder: (context, indexTwo) {
                   return AudioPage(urlAudio: post.audioContent[indexTwo]);
                 },
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 1, // количество виджетов в ряду
-                  childAspectRatio: 5 / 1,
-                ),
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 // запрещает прокрутку списка
@@ -127,14 +123,17 @@ class _PostWidget extends State<PostWidget> {
                           'file.${post.documentContent[indexTwo].split('?X').first.split('.').last}',
                           style: Theme.of(context).textTheme.titleLarge),
                       IconButton(
-                          onPressed: () {
-                            downloadFile(
-                                post.documentContent[indexTwo]
+                          onPressed: ()async {
+
+                            await downloadFile(
+  fileExtension: post.documentContent[indexTwo]
                                     .split('?X')
                                     .first
                                     .split('.')
                                     .last,
-                                post.documentContent[indexTwo]);
+  url: post.documentContent[indexTwo],
+);
+                       
                           },
                           icon: const Icon(
                             Icons.save_alt,
@@ -174,7 +173,7 @@ class _PostWidget extends State<PostWidget> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [InkWell(child: Text(post.authorName, style: Theme.of(context).textTheme.titleSmall), onTap: ()async
                 {
-                  if(post.authorName==userGlobal.userName)
+                  if(post.authorName==config.server.userGlobal.userName)
                     {return;}
                   await Navigator.push(
                     context,
@@ -203,23 +202,23 @@ class _PostWidget extends State<PostWidget> {
                                   builder: (BuildContext context) => UserListPage(userList: post.likes)));
                         },
                         onPressed: ()async{
-                          ResponseDto res = await socialApi.likePost(PostDto(id: post.id));
-                          if(res.success&&post.likes.contains(userGlobal.userName))
+                          ResponseDto res = await config.server.socialApi.likePost(PostDto(id: post.id));
+                          if(res.success&&post.likes.contains(config.server.userGlobal.userName))
                           {
                             setState(() {
-                              post.likes.remove(userGlobal.userName);
+                              post.likes.remove(config.server.userGlobal.userName);
                             });
                             return;
                           }
-                          if(res.success&&!post.likes.contains(userGlobal.userName))
+                          if(res.success&&!post.likes.contains(config.server.userGlobal.userName))
                           {
                             setState(() {
-                              post.likes.add(userGlobal.userName);
+                              post.likes.add(config.server.userGlobal.userName);
                             });
                           }
 
                     }, icon: Icon(Icons.favorite_outlined, color: config.accentColor,)), Text('${post.likes.length}', style: Theme.of(context).textTheme.titleSmall),],),),
-                  if(post.authorId == userGlobal.id)
+                  if(post.authorId == config.server.userGlobal.id)
                     SizedBox(child: IconButton(onPressed: (){
                     }, icon: Icon(Icons.delete_forever, color: config.accentColor,)),),
                 ],),

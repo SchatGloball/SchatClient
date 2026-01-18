@@ -30,14 +30,14 @@ class Localization {
       'createChatScreen': {
         'title': 'Создать чат',
         'nameUser': 'Имя пользователя',
-        'findUsers': 'Найденные пользователи:',
         'members': 'Участники:',
         'nameChat': 'Название чата',
         'goButton': 'Создать',
         'notFound': 'Пользователи не найдены',
         'notFoundChatName': 'Укажите название беседы',
         'userName': 'Имя: ',
-        'add': 'Добавить'
+        'add': 'Добавить',
+        'goEditButton': 'Сохранить',
       },
       'createPostScreen': {
         'title': 'Новая запись',
@@ -64,7 +64,7 @@ class Localization {
         'language': 'Язык приложения',
         'selectServer': 'Выбор сервера',
         'deleteServer': 'Подтверждаете удаление сервера?',
-        'exampleServer': 'Пример: 0.0.0.0:4400',
+        'exampleServer': 'Пример: 95.188.71.174:4400',
         'notification': 'Уведомления',
         'send': 'Отправка по ctrl+enter',
         'color': 'Выбрать цвет',
@@ -77,18 +77,10 @@ class Localization {
         'add': 'Задать',
         'success': 'Пароль успешно установлен',
       },
-      'editGroupScreen': {
-        'title': 'Редактировать диалог',
-        'nameUser': 'Имя пользователя',
-        'findUsers': 'Поиск пользователя:',
-        'members': 'Участники:',
-        'nameChat': 'Название чата',
-        'goButton': 'Сохранить',
-        'back': 'Назад',
-        'notFound': 'Пользователи не найдены',
-        'notFoundChatName': 'Укажите название беседы',
-        'userName': 'Имя: ',
-        'groupImage': 'Загрузить изображение'
+      'themeSwitcher': {
+        'theme': 'Тема',
+        'dark': 'Тёмная',
+        'light': 'Светлая',
       },
       'notification': {'newMessage': 'Новое сообщение'}
     },
@@ -122,14 +114,14 @@ class Localization {
       'createChatScreen': {
         'title': 'Create chat',
         'nameUser': 'Name user',
-        'findUsers': 'Find users:',
         'members': 'Members:',
         'nameChat': 'Name chat',
         'goButton': 'Create',
         'notFound': 'Users not found',
         'notFoundChatName': 'Enter a name for the conversation',
         'userName': 'User name: ',
-        'add': 'Add'
+        'add': 'Add',
+        'goEditButton': 'Save',
       },
       'createPostScreen': {
         'title': 'New post',
@@ -157,7 +149,7 @@ class Localization {
         'language': 'language',
         'selectServer': 'Server selection',
         'deleteServer': 'Do you confirm deleting the server?',
-        'exampleServer': 'Example: 0.0.0.0:4400',
+        'exampleServer': 'Example: 95.188.71.174:4400',
         'notification': 'Notification',
         'send': 'Send to ctrl+enter',
         'color': 'Pick color',
@@ -165,26 +157,62 @@ class Localization {
         'addLocalPass': 'Set a password for the application',
         'pickBackground': 'Pick Background'
       },
-      'editGroupScreen': {
-        'title': 'Edit chat',
-        'nameUser': 'Name user',
-        'findUsers': 'Find users:',
-        'members': 'Members:',
-        'nameChat': 'Name chat',
-        'goButton': 'Save',
-        'back': 'Back',
-        'notFound': 'Users not found',
-        'notFoundChatName': 'Enter a name for the conversation',
-        'userName': 'User name: ',
-        'groupImage': 'Add image'
-      },
       'notification': {
         'newMessage': 'New message'},
       'addLocalPass': {
         'localPass': 'Local Password',
         'add': 'Set password',
         'success': 'Password set successfully',
+      },
+      'themeSwitcher': {
+        'theme': 'Theme',
+        'dark': 'Dark',
+        'light': 'Light',
       }
     }
   };
+}
+
+
+
+mixin AppLocale {
+  //settingsScreen
+  static const String title = 'title';
+  static const String theme = 'theme';
+  static const String dark = 'dark';
+  static const String light = 'light';
+static const String language = 'language';
+static const String notification = 'notification';
+static const String colorsPick = 'colorsPick';
+static const String pickBackground = 'pickBackground';
+static const String addLocalPass = 'addLocalPass';
+static const String selectServer = 'selectServer';
+
+  // ignore: constant_identifier_names
+  static const Map<String, dynamic> EN = {
+    title: 'Localization',
+    theme: 'Theme',
+    dark: 'Dark',
+    light: 'Light',
+    language: 'Language',
+    notification: 'Notification',
+    colorsPick: 'Pick accent color',
+    pickBackground: 'Pick background image',
+    addLocalPass: 'Set a password for the application',
+    selectServer: 'Select server',
+  };
+  // ignore: constant_identifier_names
+  static const Map<String, dynamic> RU = {
+    title: 'ការធ្វើមូលដ្ឋានីយកម្ម',
+    theme: 'Тема',
+    dark: 'Тёмная',
+    light: 'Светлая',
+    language: 'Язык приложения',
+    notification: 'Уведомления',
+    colorsPick: 'Выбрать основной цвет',
+    pickBackground: 'Выбрать фон',
+    addLocalPass: 'Задать пароль на приложение',
+    selectServer: 'Выбор сервера',
+  };
+  
 }

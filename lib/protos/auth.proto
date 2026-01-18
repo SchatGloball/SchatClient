@@ -10,6 +10,7 @@ service AuthRpc {
     rpc FetchUser (RequestDto) returns (UserDto);
     rpc FindUser (FindDto) returns (ListUsersDto);
     rpc PutAvatar(FileDto) returns (ResponseDto);
+    rpc ServerInfo(RequestDto) returns (ResponseDto);
 }
 
 
@@ -28,13 +29,15 @@ message UserDto {
     int32 id = 1;
     string username = 2;
     string email = 3;
+    bool is_bot = 4;
     oneof optional_password
     {
-        string password = 4;
-        string image_avatar = 5;
+        
+        string password = 5;
+        string image_avatar = 6;
     }
     }
-
+    
 
 message TokensDto {
     string access_token = 1;

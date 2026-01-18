@@ -3,6 +3,7 @@ import 'package:lottie/lottie.dart';
 import 'package:schat2/MessageService/reactionWidget.dart';
 import 'package:schat2/MessageService/videoPlayer.dart';
 import 'package:schat2/MessageService/webPreview.dart';
+import 'package:schat2/generated/chats.pb.dart';
 
 import '../DataClasses/chatData.dart';
 import '../downloadFile.dart';
@@ -18,16 +19,22 @@ class MessageOne extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Row(
-          mainAxisAlignment: message.authorId == userGlobal.id
+        Container(
+          color: selectedMessages.contains(message) ? config.accentColor: null,
+        padding: const EdgeInsets.all(2),
+          child: Row(
+          mainAxisAlignment: message.authorId == config.server.userGlobal.id
               ? MainAxisAlignment.end
               : MainAxisAlignment.start,
           children: [
             const Padding(padding: EdgeInsets.all(7)),
+           // IconButton(onPressed: (){}, icon: Icon(Icons.info), iconSize: 19,) ,
             Text('${message.dateMessage} ${message.authorName}',
                 style: Theme.of(context).textTheme.titleSmall)
           ],
         ),
+        )
+        ,
         if(message.forwarded)
           Container(
             color: Colors.white10,
@@ -43,7 +50,7 @@ class MessageOne extends StatelessWidget {
           )
         ,
         Row(
-          mainAxisAlignment: message.authorId == userGlobal.id
+          mainAxisAlignment: message.authorId == config.server.userGlobal.id
               ? MainAxisAlignment.end
               : MainAxisAlignment.start,
           children: [
@@ -55,12 +62,12 @@ class MessageOne extends StatelessWidget {
             ),
           ],
         ),
-        GridView.builder(
+        ListView.builder(
           itemCount: message.imageContent.length,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 1, // количество виджетов в ряду
-            childAspectRatio: 1 / 1,
-          ),
+          // gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          //   crossAxisCount: 1, // количество виджетов в ряду
+          //   childAspectRatio: 3 / 1,
+          // ),
           shrinkWrap:
           true, // позволяет списку занимать только необходимое пространство
           physics:
@@ -77,10 +84,10 @@ class MessageOne extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(5),
                 child: AspectRatio(
-                  aspectRatio: 1 / 1, // задаем соотношение сторон 1:1
+                  aspectRatio: 2, // задаем соотношение сторон 1:1
                   child: Image.network(
                     message.imageContent[indexTwo], // ваш URL изображения
-                    fit: BoxFit.cover, // заполняем пространство виджета
+                    fit: BoxFit.scaleDown, // заполняем пространство виджета
                   ),
                 ),
               ),
@@ -100,20 +107,17 @@ class MessageOne extends StatelessWidget {
           physics: const NeverScrollableScrollPhysics(),
           // запрещает прокрутку списка
         ),
-        GridView.builder(
+        ListView.builder(
           itemCount: message.audioContent.length,
           itemBuilder: (context, indexTwo) {
             return AudioPage(urlAudio: message.audioContent[indexTwo]);
           },
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 1, // количество виджетов в ряду
-            childAspectRatio: 5 / 1,
-          ),
+          
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           // запрещает прокрутку списка
         ),
-        GridView.builder(
+        ListView.builder(
           itemCount: message.documentContent.length,
           itemBuilder: (context, indexTwo) {
             return Row(
@@ -123,14 +127,16 @@ class MessageOne extends StatelessWidget {
                     'file.${message.documentContent[indexTwo].split('?X').first.split('.').last}',
                     style: Theme.of(context).textTheme.titleLarge),
                 IconButton(
-                    onPressed: () {
-                      downloadFile(
-                          message.documentContent[indexTwo]
+                    onPressed: () async{
+                      await downloadFile(
+  fileExtension: message.documentContent[indexTwo]
                               .split('?X')
                               .first
                               .split('.')
                               .last,
-                          message.documentContent[indexTwo]);
+  url: message.documentContent[indexTwo],
+);
+                      
                     },
                     icon: const Icon(
                       Icons.save_alt,
@@ -139,23 +145,19 @@ class MessageOne extends StatelessWidget {
               ],
             );
           },
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 1, // количество виджетов в ряду
-            childAspectRatio: 5 / 1,
-          ),
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           // запрещает прокрутку списка
         ),
-        GridView.builder(
+        ListView.builder(
           itemCount: message.linksInBody.length,
           itemBuilder: (context, indexTwo) {
             return WebPreview(link: message.linksInBody[indexTwo]);
           },
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 1, // количество виджетов в ряду
-            childAspectRatio: 2 / 1,
-          ),
+          // gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          //   crossAxisCount: 1, // количество виджетов в ряду
+          //   childAspectRatio: 2 / 1,
+          // ),
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           // запрещает прокрутку списка
@@ -163,10 +165,10 @@ class MessageOne extends StatelessWidget {
         if (message.stickerContent != 0)
           Center(
               child: SizedBox(
-                height: MediaQuery.of(context).size.height * 0.3 - kToolbarHeight,
+                height: MediaQuery.of(context).size.height * 0.2 - kToolbarHeight,
                 child: Lottie.asset('assets/${message.stickerContent}.json'),
               )),
-        if (message.delivered && message.authorId == userGlobal.id)
+        if (message.delivered && message.authorId == config.server.userGlobal.id)
           const Row(
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
@@ -176,6 +178,24 @@ class MessageOne extends StatelessWidget {
               )
             ],
           ),
+ListView.builder(
+          itemCount: message.buttons.length,
+          itemBuilder: (context, indexTwo) {
+            return 
+            Container(
+              padding: EdgeInsets.all(3),
+              child: ElevatedButton(onPressed: ()async{
+             await config.server.chatApi.sendReaction(ReactionMessage(ReactionMessageDto(authorId: config.server.userGlobal.id, body:  message.buttons[indexTwo], authorName: config.server.userGlobal.userName, messageId: message.id, dateReaction: DateTime.now().toString(), stickerContent: 0)));
+            }, child: Text(message.buttons[indexTwo])),)
+            ;
+            
+          },
+          
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+        
+        ),
+
         if(message.reactions.isNotEmpty)
           ReactionWidget(message: message)
       ],

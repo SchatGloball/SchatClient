@@ -6,7 +6,7 @@ class Chat {
   Chat(ChatDto chat) {
     id = chat.id;
     if (chat.members.length == 2) {
-      if (chat.members.first.memberUsername == userGlobal.userName) {
+      if (chat.members.first.memberUsername == config.server.userGlobal.userName) {
         name = chat.members.last.memberUsername;
       } else {
         name = chat.members.first.memberUsername;
@@ -18,7 +18,7 @@ class Chat {
 
     chatImage = chat.chatImage;
     if (chatImage == '' && chat.members.length == 2) {
-      if (chat.members.first.memberUsername == userGlobal.userName) {
+      if (chat.members.first.memberUsername == config.server.userGlobal.userName) {
         chatImage = chat.members.last.memberImage;
       } else {
         chatImage = chat.members.first.memberImage;
@@ -37,15 +37,15 @@ class Chat {
   late String name;
   late final int authorId;
   late String chatImage;
-  List members = [];
+  List<String> members = [];
   List<Message> messages = [];
 
-  addMessage(MessageDto element, bool startArray) {
+  void addMessage(MessageDto element, bool startArray) {
     if (element.body != '') {
       if (!startArray) {
         messages.add(Message(element));
       } else {
-        if (element.authorId != userGlobal.id) {
+        if (element.authorId != config.server.userGlobal.id) {
           for (var mes in messages) {
             mes.delivered = true;
           }
@@ -56,7 +56,7 @@ class Chat {
         dateLastMessage = messages.first.date;
       }
     }
-  }
+  }  
 }
 
 class Message {
@@ -112,6 +112,8 @@ class Message {
       int.parse(message.dateMessage.split(' ')[1].split(':')[1]),
       int.parse(message.dateMessage.split(' ')[1].split(':')[2].split('.')[0]),
     );
+    
+      buttons.addAll(message.button);   
   }
 
   late final int id;
@@ -123,6 +125,7 @@ class Message {
   List<String> imageContent = [];
   List<String> documentContent = [];
   List<ReactionMessage> reactions = [];
+  List<String> buttons = [];
   late int stickerContent;
   late final DateTime date;
   late final String dateMessage;
@@ -132,7 +135,7 @@ class Message {
   late final String originalDate;
   late final bool forwarded;
 
-  parseDate(String dateTime) {
+  String parseDate(String dateTime) {
     if (dateTime.isEmpty) {
       return ' ';
     }
@@ -158,7 +161,7 @@ class ReactionMessage {
     date = parseDate(r.dateReaction);
   }
 
-  parseDate(String dateTime) {
+  String parseDate(String dateTime) {
     String year = dateTime.split(' ')[0].split('-')[0];
     String mouth = dateTime.split(' ')[0].split('-')[1];
     String day = dateTime.split(' ')[0].split('-')[2];
@@ -168,6 +171,7 @@ class ReactionMessage {
     String timeMessage = '$year.$mouth.$day $hour:$minute:$second';
     return timeMessage;
   }
+
 
   late int id;
   late String body;

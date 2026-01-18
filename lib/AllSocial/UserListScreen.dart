@@ -53,7 +53,7 @@ class _UserListPage extends State<UserListPage> {
                   return InkWell(child: Container(
                     color: Colors.black45,
                     padding: const EdgeInsetsGeometry.all(3), child: Text(userList[index], style: Theme.of(context).textTheme.titleLarge,), ), onTap: ()async{
-                    if(userGlobal.userName!=userList[index])
+                    if(config.server.userGlobal.userName!=userList[index])
                       {
                         await Navigator.push(
                             context,

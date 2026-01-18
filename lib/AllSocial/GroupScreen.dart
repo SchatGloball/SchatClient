@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:schat2/AllSocial/createGroup.dart';
 import 'package:schat2/AllSocial/postWidget.dart';
+import 'package:schat2/DataClasses/Topik.dart';
 import 'package:schat2/generated/social.pb.dart';
 import '../DataClasses/Post.dart';
 import '../eventStore.dart';
@@ -15,31 +16,30 @@ class GroupPage extends StatefulWidget {
   late int indexGroup;
   GroupPage({super.key, required this.indexGroup});
   @override
-  State<GroupPage> createState() => _GroupPage(indexGroup: indexGroup);
+  State<GroupPage> createState() => _GroupPage();
 }
 
 class _GroupPage extends State<GroupPage> {
 
-  late int indexGroup;
-  _GroupPage({required this.indexGroup});
+ 
   @override
   void initState() {
+   
     super.initState();
-    downloadPosts(selectTopik,  groups[indexGroup].posts[selectTopik]!.length);
+    downloadPosts( groups[widget.indexGroup].topik[selectTopik].name,  groups[widget.indexGroup].topik[selectTopik].posts.length);
   }
-String selectTopik = 'general';
-  //late StreamSubscription streamSubscription;
-
+int selectTopik = 0;
+ 
   @override
   void dispose() {
     super.dispose();
   }
   
   downloadPosts(String topik, int offset) async {
-    List<PostDto> p = await socialApi.getChannelPosts(Group(ChannelDto(id: groups[indexGroup].id, topik: [selectTopik])), offset);
+    List<PostDto> p = await config.server.socialApi.getChannelPosts(Group(ChannelDto(id: groups[widget.indexGroup].id, topik: [groups[widget.indexGroup].topik[selectTopik].name])), offset);
     for(PostDto post in p)
     {
-      groups[indexGroup].posts[topik]!.add(PostData(post));
+      groups[widget.indexGroup].topik[selectTopik].posts.add(PostData(post));
     }
     setState(() {
 
@@ -48,7 +48,14 @@ String selectTopik = 'general';
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
+    return 
+    LayoutBuilder(
+      builder: (context, constraints) {
+        final screenSize = MediaQuery.of(context).size;
+                double size = screenSize.width > screenSize.height?config.maxHeightWidescreen:0.95;
+
+        return
+    Stack(
       children: [
         Image.asset(
           'assets/${config.backgroundAsset}',
@@ -57,44 +64,43 @@ String selectTopik = 'general';
           fit: BoxFit.cover,
         ),
         Scaffold(
-          backgroundColor: Colors.transparent,
+         
           appBar: AppBar(
             leading: BackButton(
-                color: Colors.white54,
                 onPressed: () {
                   Navigator.of(context).pop();
                 }),
-            backgroundColor: config.accentColor,
+            
             automaticallyImplyLeading: false,
             title:  Text('Schat social', style: Theme.of(context).textTheme.titleLarge,),
             actions: [
-              if(groups[indexGroup].authorId != userGlobal.id)
+              if(groups[widget.indexGroup].authorId != config.server.userGlobal.id)
               IconButton(onPressed: ()async{
-                ResponseDto res = await socialApi.addMemberGroup(ChannelDto(id: groups[indexGroup].id));
-                if(res.success&&groups[indexGroup].members.contains(userGlobal.userName))
+                ResponseDto res = await config.server.socialApi.addMemberGroup(ChannelDto(id: groups[widget.indexGroup].id));
+                if(res.success&&groups[widget.indexGroup].members.contains(config.server.userGlobal.userName))
                 {
                   setState(() {
-                    groups[indexGroup].members.remove(userGlobal.userName);
+                    groups[widget.indexGroup].members.remove(config.server.userGlobal.userName);
                   });
                   return;
                 }
-                if(res.success&&!groups[indexGroup].members.contains(userGlobal.userName))
+                if(res.success&&!groups[widget.indexGroup].members.contains(config.server.userGlobal.userName))
                 {
                   setState(() {
-                    groups[indexGroup].members.add(userGlobal.userName);
+                    groups[widget.indexGroup].members.add(config.server.userGlobal.userName);
                   });
                 }
-              }, icon: groups[indexGroup].members.contains(userGlobal.userName)?const Icon(Icons.backspace_outlined) : const Icon(Icons.add_circle_outline)),
-              if(groups[indexGroup].authorId == userGlobal.id)
+              }, icon: groups[widget.indexGroup].members.contains(config.server.userGlobal.userName)?const Icon(Icons.backspace_outlined) : const Icon(Icons.add_circle_outline)),
+              if(groups[widget.indexGroup].authorId == config.server.userGlobal.id)
                 IconButton(onPressed: ()async{
 
                  final id =  await Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (BuildContext context) => CreateGroupPage(group: groups[indexGroup])));
+                          builder: (BuildContext context) => CreateGroupPage(group: groups[widget.indexGroup])));
     if(id.runtimeType!=Null) {
 groups.clear();
-ListChannelsDto c = await socialApi.getUserGroups(0);
+ListChannelsDto c = await config.server.socialApi.getUserGroups(0);
 for(ChannelDto channel in c.channels)
 {
   groups.add(Group(channel));
@@ -105,7 +111,10 @@ setState(() {
     }
                 }, icon: const Icon(Icons.edit_outlined))
              ],),
-          body: Column(
+          body: 
+          Center(child: SizedBox(
+            width: MediaQuery.of(context).size.width * size,
+            child: Column(
     children: [
       Container(
 
@@ -116,11 +125,11 @@ setState(() {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            if(groups[indexGroup].image!='')
+            if(groups[widget.indexGroup].image!='')
               InkWell(
                 child: CircleAvatar(
                   backgroundImage: NetworkImage(
-                      groups[indexGroup].image),
+                      groups[widget.indexGroup].image),
                   radius: 55,
                 ),
                 onTap: ()
@@ -130,90 +139,91 @@ setState(() {
                       MaterialPageRoute(
                           builder: (BuildContext context) =>
                               ImageViewerPage(
-                                image: groups[indexGroup].image,
+                                image: groups[widget.indexGroup].image,
                               )));
                 },
               )
             ,
-            if(groups[indexGroup].image=='')
-              Icon(Icons.groups, size: 55, color: config.accentColor,),
-
-            Column(
+            if(groups[widget.indexGroup].image=='')
+              Icon(Icons.groups, size: 55),
+Expanded(child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [Text(groups[indexGroup].name, style: Theme.of(context).textTheme.titleMedium,),
+                children: [
+            
+                  Text(groups[widget.indexGroup].name, style: Theme.of(context).textTheme.titleMedium, overflow: TextOverflow.ellipsis, maxLines: 2,)
+                  ,
                   InkWell(onTap: ()async{
                     await  Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (BuildContext context) => UserListPage(userList: groups[indexGroup].members)));
-                  }, child: Text('members ${groups[indexGroup].members.length}', style: Theme.of(context).textTheme.titleMedium))
-                  ],)
+                            builder: (BuildContext context) => UserListPage(userList: groups[widget.indexGroup].members)));
+                  }, child: Text('members ${groups[widget.indexGroup].members.length}', style: Theme.of(context).textTheme.titleMedium, overflow: TextOverflow.ellipsis,))
+                  
+                  ],))
+            
           ],
         ),
       ),
-      Expanded(
-
-        child: GridView.builder(
-          reverse: true,
-          itemCount: groups[indexGroup].topik.length,
-          gridDelegate:
-          const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount:
-            4, // количество виджетов в ряду
-            childAspectRatio: 3,
-          ),
+      SizedBox(
+height: 30,
+        child: ListView.builder(
+          reverse: false,
+          itemCount: groups[widget.indexGroup].topik.length,
+          scrollDirection: Axis.horizontal,
           shrinkWrap:
           true, // позволяет списку занимать только необходимое пространство
           itemBuilder:
               (BuildContext context, int index) {
             return InkWell(
-              onTap: (){
-                selectTopik = groups[indexGroup].topik[index];
-                downloadPosts(selectTopik, groups[indexGroup].posts[selectTopik]!.length);
+              onTap: ()async{
+                selectTopik = index;
+               await downloadPosts( groups[widget.indexGroup].topik[selectTopik].name,  groups[widget.indexGroup].topik[selectTopik].posts.length);
               },
-              child: Container(padding: EdgeInsets.all(3), child: Container(child:
-                  Center(child:  Text(groups[indexGroup].topik[index], style: Theme.of(context).textTheme.titleSmall))
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 3),
+                child:
+                  Center(child:  Text(groups[widget.indexGroup].topik[index].name, style: Theme.of(context).textTheme.titleSmall), )
               ,
-                color: selectTopik==groups[indexGroup].topik[index] ? config.accentColor : Colors.black26,)),
+                color: groups[widget.indexGroup].topik[selectTopik].name==groups[widget.indexGroup].topikList[index] ? config.accentColor : Colors.black26,),
             ); },
         ),
       ),
-      SizedBox(
-        height: MediaQuery.of(context).size.height* 0.7 - kToolbarHeight,
+      Expanded(
         child: RefreshIndicator(
             onRefresh: () async {
             },
             child: ListView.builder(
-              itemCount: groups[indexGroup].posts[selectTopik]!.length,
+              itemCount: groups[widget.indexGroup].topik[selectTopik].posts.length,
               itemBuilder: (context, index) {
-                return PostWidget(post: groups[indexGroup].posts[selectTopik]![index]);
+                return PostWidget(post: groups[widget.indexGroup].topik[selectTopik].posts[index]);
               },
             )),
       )
     ],
     ),
-          floatingActionButton: groups[indexGroup].authorId==userGlobal.id? FloatingActionButton(
-            backgroundColor: Colors.black54,
+          ),)
+          ,
+          floatingActionButton: groups[widget.indexGroup].authorId==config.server.userGlobal.id? FloatingActionButton(
             onPressed: () async {
             final id =  await  Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (BuildContext context) => CreatePostPage(post: PostData(PostDto(id: 0, body: '', authorId: userGlobal.id, channelId: groups[indexGroup].id, authorName: userGlobal.userName, data: [], likes: [], content: [], comments: [], datePost: '2025-06-13 15:31:56.050045', tags: [], topik: selectTopik, stickerContent: 0)),)));
+                      builder: (BuildContext context) => CreatePostPage(post: PostData(PostDto(id: 0, body: '', authorId: config.server.userGlobal.id, channelId: groups[widget.indexGroup].id, authorName: config.server.userGlobal.userName, data: [], likes: [], content: [], comments: [], datePost: '2025-06-13 15:31:56.050045', tags: [], topik: groups[widget.indexGroup].topik[selectTopik].name, stickerContent: 0)),)));
 if(id.runtimeType!=Null)
   {
-PostDto post = await socialApi.getOnePost(id);
+PostDto post = await config.server.socialApi.getOnePost(id);
 setState(() {
-  groups[indexGroup].posts[post.topik]!.insert(0, PostData(post));
+  groups[widget.indexGroup].topik[selectTopik].posts.insert(0, PostData(post));
 });
   }
             },
             child: Icon(
               Icons.add_box_outlined,
-              color: config.accentColor,
+            
             ),
           ):null,
         )
       ],
-    );
+    ); });
   }
 }

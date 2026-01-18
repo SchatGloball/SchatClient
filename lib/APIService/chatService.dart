@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:grpc/grpc_connection_interface.dart';
 import 'package:grpc/grpc_or_grpcweb.dart';
-import 'package:rxdart/rxdart.dart';
+
 
 import 'package:grpc/grpc.dart';
 
@@ -12,41 +13,66 @@ import '../eventStore.dart';
 import '../generated/chats.pbgrpc.dart';
 
 class ChatService {
-  dynamic channel = ClientChannel(Env.defaultServer,
-      port: Env.defaultPort,
-      options:
-          const ChannelOptions(credentials: ChannelCredentials.insecure()));
-  BehaviorSubject<UpdateDTO> eventController = BehaviorSubject();
-  ChatService(String serverAddress, int portServer) {
-    if (config.isWeb) {
+
+
+
+ late dynamic channel;
+  late ChatsRpcClient stubChat;
+  StreamSubscription<UpdateDTO>? listenServerEvent;
+  
+ 
+  bool _isDisposed = false;
+  
+  
+  
+  ChatService(String serverAddress, int portServer, {required bool isWeb}) {
+    _initializeChannel(serverAddress, portServer, isWeb);
+  }
+  
+  void _initializeChannel(String serverAddress, int portServer, bool isWeb) {
+    if (isWeb) {
       channel = GrpcOrGrpcWebClientChannel.toSingleEndpoint(
-          host: serverAddress, port: portServer, transportSecure: false);
+        host: serverAddress,
+        port: portServer,
+        transportSecure: false,
+      );
     } else {
-      channel = ClientChannel(serverAddress,
-          port: portServer,
-          options:
-              const ChannelOptions(credentials: ChannelCredentials.insecure()));
+      channel = ClientChannel(
+        serverAddress,
+        port: portServer,
+        options: ChannelOptions(
+          credentials: ChannelCredentials.insecure(),
+         //idleTimeout: Duration(seconds: 10), // Увеличено
+         // connectionTimeout: Duration(seconds: 5), // Увеличено
+          codecRegistry: CodecRegistry(codecs: [GzipCodec()]),
+          // Экспоненциальная задержка для повторных попыток
+          backoffStrategy:  (last) => Duration(seconds: last == null ? 5 : last.inSeconds * 2),
+          keepAlive: ClientKeepAliveOptions(
+            pingInterval: Duration(seconds: 180), // Уменьшено с 2 минут
+            timeout: Duration(seconds: 10), // Увеличено
+            permitWithoutCalls: true,
+          ),
+        ),
+      );
     }
     stubChat = ChatsRpcClient(channel);
   }
 
-  ChatsRpcClient stubChat = ChatsRpcClient(ClientChannel(Env.defaultServer,
-      port: Env.defaultPort,
-      options:
-          const ChannelOptions(credentials: ChannelCredentials.insecure())));
-
-  updateApi(String serverAddress, int portServer) {
-    if (config.isWeb) {
-      channel = GrpcOrGrpcWebClientChannel.toSingleEndpoint(
-          host: serverAddress, port: portServer, transportSecure: false);
-    } else {
-      channel = ClientChannel(serverAddress,
-          port: portServer,
-          options:
-              const ChannelOptions(credentials: ChannelCredentials.insecure()));
-    }
-    stubChat = ChatsRpcClient(channel);
+  void updateApi(String serverAddress, int portServer) {
+    // Закрыть старое соединение перед созданием нового
+    dispose();
+    _initializeChannel(serverAddress, portServer, config.isWeb);
   }
+  void dispose() {
+    _isDisposed = true;
+    listenServerEvent?.cancel();
+    
+    // Закрыть канал для нативных платформ
+    if (channel is ClientChannel) {
+      (channel as ClientChannel).shutdown();
+    }
+  }
+
 
   late ResponseStream<UpdateDTO> updateEvent;
 
@@ -56,7 +82,7 @@ class ChatService {
       chatName = 'default';
     }
     try {
-      Map<String, String> metadata = {'access_token': userGlobal.accessToken};
+      Map<String, String> metadata = {'access_token': config.server.accessToken};
 
       ChatDto creating = ChatDto();
       creating.name = chatName;
@@ -77,7 +103,7 @@ class ChatService {
 
   viewAllChat() async {
     try {
-      Map<String, String> metadata = {'access_token': userGlobal.accessToken};
+      Map<String, String> metadata = {'access_token': config.server.accessToken};
       RequestDto req = RequestDto();
       ListChatsDto res = await stubChat.fetchAllChats(req,
           options: CallOptions(metadata: metadata));
@@ -87,27 +113,17 @@ class ChatService {
     }
   }
 
-  update() async {
-    Map<String, String> metadata = {'access_token': userGlobal.accessToken};
+ void update() async {
+    Map<String, String> metadata = {'access_token': config.server.accessToken};
     final request = RequestDto(); // создаем экземпляр запроса
     updateEvent = stubChat.listenEvent(request,
         options: CallOptions(
             metadata: metadata)); // отправляем запрос и получаем стрим
-    listenServerEvent = updateEvent.listen((update) {
-      // обрабатываем полученный UpdateDTO
-      eventController.add(update);
-    }, onDone: () async {
-      //попытка переподключения через каждые 5 секунд
-      print('UPDATE');
-      bool check = await refreshTokens();
-      print(check);
-      return Future.delayed(const Duration(seconds: 5), () => update());
-    });
   }
 
   viewMessagesChat(int idChat, int offset) async {
     try {
-      Map<String, String> metadata = {'access_token': userGlobal.accessToken};
+      Map<String, String> metadata = {'access_token': config.server.accessToken};
       ChatDto req = ChatDto();
       req.id = idChat;
       req.name = offset.toString();
@@ -122,7 +138,7 @@ class ChatService {
   sendMessages(int idChat, String message, List<FileData> files,
       [int? sticker]) async {
     try {
-      Map<String, String> metadata = {'access_token': userGlobal.accessToken};
+      Map<String, String> metadata = {'access_token': config.server.accessToken};
       List<String> typeContent = [];
       MessageDto req = MessageDto();
       for (var element in files) {
@@ -147,7 +163,7 @@ class ChatService {
 
   removeChat(int idChat) async {
     try {
-      Map<String, String> metadata = {'access_token': userGlobal.accessToken};
+      Map<String, String> metadata = {'access_token': config.server.accessToken};
 
       ChatDto req = ChatDto();
       req.id = idChat;
@@ -162,7 +178,7 @@ class ChatService {
 
   removeMessage(Message mes) async {
     try {
-      Map<String, String> metadata = {'access_token': userGlobal.accessToken};
+      Map<String, String> metadata = {'access_token': config.server.accessToken};
       MessageDto req = MessageDto(id: mes.id);
       var res = await stubChat.deleteMessage(req,
           options: CallOptions(metadata: metadata));
@@ -174,7 +190,7 @@ class ChatService {
 
   editGroupChat(ChatDto chat) async {
     try {
-      Map<String, String> metadata = {'access_token': userGlobal.accessToken};
+      Map<String, String> metadata = {'access_token': config.server.accessToken};
       var res = await stubChat.editGroupChat(chat,
           options: CallOptions(metadata: metadata));
       return {'status': res};
@@ -195,7 +211,7 @@ class ChatService {
       platform = 'out';
     }
     try {
-      Map<String, String> metadata = {'access_token': userGlobal.accessToken};
+      Map<String, String> metadata = {'access_token': config.server.accessToken};
       UpdateAppRes res = await stubChat.updateApp(
           UpdateAppReq(version: Env.version, platform: platform),
           options: CallOptions(metadata: metadata));
@@ -205,8 +221,7 @@ class ChatService {
     }
   }
 
-  notificationNewMessage(String accessToken) async {
-    try {
+ Future <bool> notificationNewMessage(String accessToken) async {
       Map<String, String> metadata = {'access_token': accessToken};
       ResponseDto res = await stubChat.notification(RequestDto(),
           options: CallOptions(metadata: metadata));
@@ -215,14 +230,12 @@ class ChatService {
       } else {
         return false;
       }
-    } catch (e) {
-      return {'Error': e.toString()};
-    }
+    
   }
 
   searchMessage(String searchKey, Chat chat)async
   {
-    Map<String, String> metadata = {'access_token': userGlobal.accessToken};
+    Map<String, String> metadata = {'access_token': config.server.accessToken};
     ChatDto res = await stubChat.searchMessage(
         SearchRequestDto(searchRequest: searchKey, chat: ChatDto(id:chat.id, name: chat.name, authorId: chat.authorId.toString(), chatImage: '', messages: [], members: [], image: [])),
         options: CallOptions(metadata: metadata));
@@ -231,8 +244,8 @@ class ChatService {
 
   sendReaction(ReactionMessage reaction) async {
     try {
-      Map<String, String> metadata = {'access_token': userGlobal.accessToken};
-      ReactionMessageDto req = ReactionMessageDto(id: 0, body: reaction.body, authorId: userGlobal.id, authorName: userGlobal.userName, messageId: reaction.messageId, stickerContent: reaction.sticker, dateReaction: DateTime.now().toString());
+      Map<String, String> metadata = {'access_token': config.server.accessToken};
+      ReactionMessageDto req = ReactionMessageDto(id: 0, body: reaction.body, authorId: config.server.userGlobal.id, authorName: config.server.userGlobal.userName, messageId: reaction.messageId, stickerContent: reaction.sticker, dateReaction: DateTime.now().toString());
       var res = await stubChat.reactionMessage(req,
           options: CallOptions(metadata: metadata));
       return {'status': res};
@@ -243,7 +256,7 @@ class ChatService {
 
   forwardMessage(Chat chat, List<Message> m) async {
     try {
-      Map<String, String> metadata = {'access_token': userGlobal.accessToken};
+      Map<String, String> metadata = {'access_token': config.server.accessToken};
       List<MessageDto> mes = [];
 
       for(Message m in m)
@@ -261,7 +274,7 @@ class ChatService {
 
   removeReaction(ReactionMessage r)async
   {
-    Map<String, String> metadata = {'access_token': userGlobal.accessToken};
+    Map<String, String> metadata = {'access_token': config.server.accessToken};
 
     ReactionMessageDto req = ReactionMessageDto(id: r.id, body: r.body, authorId: r.authorId, authorName: r.authorName, messageId: r.messageId, stickerContent: r.sticker, dateReaction: r.date);
     ResponseDto res = await stubChat.deleteReactionMessage(req,

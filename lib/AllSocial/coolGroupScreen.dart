@@ -32,7 +32,7 @@ class _CoolGroupsPage extends State<CoolGroupsPage> {
 
 
   downloadGroups() async {
-    ListChannelsDto c = await socialApi.getCoolGroups();
+    ListChannelsDto c = await config.server.socialApi.getCoolGroups();
     for(ChannelDto channel in c.channels)
     {
       groups.add(Group(channel));

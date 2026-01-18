@@ -1,8 +1,7 @@
 import 'dart:io';
-import 'package:flutter/widgets.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:schat2/DataClasses/server.dart';
 import 'package:sembast/sembast_io.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:sembast_web/sembast_web.dart';
 
 import '../env.dart';
@@ -13,34 +12,46 @@ class LocalStorage {
   dynamic factory = 0;
   dynamic db = 0;
 
-  setTokens(String accessToken, String refreshToken) async {
-    Map config = await getAppConfig();
-    await store.add(db, <String, Object?>{
-      'language': config['language'],
-      'notification': config['notification'],
-      'accent_color': config['accent_color'],
-      'servers': config['servers'],
-      'accessToken': accessToken,
-      'refreshToken': refreshToken,
-      'localPass': config['localPass'],
-      'sendHotkeyCtrl': config['sendHotkeyCtrl'],
-      'backgroundAsset': config['backgroundAsset'],
-    });
+  setTokens(String refreshToken) async {
+Map config = await getAppConfig();
+  List<Map<String, dynamic>> servers = [];
+  
+  for (Map s in config['servers']) {
+    // Создаем копию Map, чтобы избежать проблем с неизменяемостью
+    Map<String, dynamic> serverCopy = Map<String, dynamic>.from(s);
+    
+    if (serverCopy['select'] == true) {
+      // Модифицируем копию, а не оригинальный объект
+      serverCopy['refreshToken'] = refreshToken;
+    }
+    
+    servers.add(serverCopy);
+  }
+  
+  await store.add(db, <String, Object?>{
+    'language': config['language'],
+    'notification': config['notification'],
+    'accent_color': config['accent_color'],
+    'servers': servers,
+    'localPass': config['localPass'],
+    'sendHotkeyCtrl': config['sendHotkeyCtrl'],
+    'backgroundAsset': config['backgroundAsset'],
+    'isDarkTheme': config['isDarkTheme']
+  });
   }
 
   Future<Map> getAppConfig() async {
     List<int> listKeys = await store.findKeys(db);
     if (listKeys.isEmpty) {
-      await initDataBase();
+      await initDataBase(config.isWeb, true);
       listKeys = await store.findKeys(db);
     }
     Map<String, Object?> value =
         await store.record(listKeys.last).get(db) ?? {};
     if (value.keys.isEmpty) {
-      print('Error: ошибка бд!!!!!!!!!!!!!!!!!');
-      print(listKeys);
-      Map n = await getAppConfig();
-      print(n);
+     
+      //Map n = await getAppConfig();
+  
     } else {
       if (listKeys.length > 40) {
         await store.drop(db);
@@ -49,136 +60,150 @@ class LocalStorage {
           'notification': value['notification'],
           'accent_color': value['accent_color'],
           'servers': value['servers'],
-          'accessToken': value['accessToken'],
-          'refreshToken': value['refreshToken'],
           'localPass': value['localPass'],
           'sendHotkeyCtrl': value['sendHotkeyCtrl'],
           'backgroundAsset': value['backgroundAsset'],
+          'isDarkTheme': value['isDarkTheme']
         });
       }
     }
     return value;
   }
 
-  removeUserData() async {
-    Map config = await getAppConfig();
-    await store.add(db, <String, Object?>{
-      'language': config['language'],
-      'notification': config['notification'],
-      'accent_color': config['accent_color'],
-      'servers': config['servers'],
-      'accessToken': '',
-      'refreshToken': '',
-      'localPass': config['localPass'],
-      'sendHotkeyCtrl': config['sendHotkeyCtrl'],
-      'backgroundAsset': config['backgroundAsset'],
-    });
-  }
+ 
 
   setConfig() async {
-    Map configOld = await getAppConfig();
+    final Map configOld = await getAppConfig();
     await store.add(db, <String, Object?>{
       'language': config.language,
       'notification': config.notification,
-      'accent_color': config.accentColor.value,
+      'accent_color': config.accentColor.toARGB32(),
       'servers': configOld['servers'],
-      'accessToken': configOld['accessToken'],
-      'refreshToken': configOld['refreshToken'],
       'localPass': config.localPass,
       'sendHotkeyCtrl': config.sendHotkeyCtrl,
       'backgroundAsset': config.backgroundAsset,
+      'isDarkTheme': config.isDarkTheme
     });
   }
 
-  Future<List> getServers() async {
-    Map config = await getAppConfig();
-    List servers = config['servers'];
-    return servers;
-  }
 
-  Future<List> setServer(String server) async {
+  Future<bool> setServer(BackendServer server) async {
     Map configOld = await getAppConfig();
     await store.drop(db);
     List newServers = [];
-    for (String s in configOld['servers']) {
+    for (Map s in configOld['servers']) {
       newServers.add(s);
     }
-    newServers.add(server);
+    newServers.add({'name': server.name, 'address':server.address, 'port': server.port, 'refreshToken': server.refreshToken, 'select': server.name==config.server.name?true:false});
     await store.add(db, <String, Object?>{
       'language': configOld['language'],
       'notification': configOld['notification'],
       'accent_color': configOld['accent_color'],
       'servers': newServers,
-      'accessToken': configOld['accessToken'],
-      'refreshToken': configOld['refreshToken'],
       'localPass': configOld['localPass'],
       'sendHotkeyCtrl': configOld['sendHotkeyCtrl'],
       'backgroundAsset': configOld['backgroundAsset'],
+      'isDarkTheme': configOld['isDarkTheme']
     });
-    return newServers;
+    return true;
   }
-
-  Future<List> deleteServer(int index) async {
+Future<bool> editServer(BackendServer newServer, String oldName) async {
     Map configOld = await getAppConfig();
     await store.drop(db);
-    List newServers = configOld['servers'];
-    newServers.removeAt(index);
-    await store.add(db, <String, Object?>{
-      'language': configOld['language'],
-      'notification': configOld['notification'],
-      'accent_color': configOld['accent_color'],
-      'servers': newServers,
-      'accessToken': configOld['accessToken'],
-      'refreshToken': configOld['refreshToken'],
-      'localPass': configOld['localPass'],
-      'sendHotkeyCtrl': configOld['sendHotkeyCtrl'],
-      'backgroundAsset': configOld['backgroundAsset'],
-    });
-    return newServers;
-  }
-
-  Future<List> selectServer(int index) async {
-    Map configOld = await getAppConfig();
-    await store.drop(db);
-    List newServers = [];
-    for (String s in configOld['servers']) {
-      newServers.add(s);
+    List<Map> newServers = [];
+    for (Map s in configOld['servers']) {
+      if(oldName == s['name'])
+      {
+newServers.add({'name': newServer.name, 'address':newServer.address, 'port': newServer.port, 'refreshToken':  s['refreshToken'], 'select': oldName==config.server.name?true:false});
+      }
+      else{
+newServers.add(s);
+      }
+      
     }
-    String buff = newServers[index];
-    newServers.removeAt(index);
-    newServers.insert(0, buff);
     await store.add(db, <String, Object?>{
       'language': configOld['language'],
       'notification': configOld['notification'],
       'accent_color': configOld['accent_color'],
       'servers': newServers,
-      'accessToken': configOld['accessToken'],
-      'refreshToken': configOld['refreshToken'],
       'localPass': configOld['localPass'],
       'sendHotkeyCtrl': configOld['sendHotkeyCtrl'],
       'backgroundAsset': configOld['backgroundAsset'],
+      'isDarkTheme': configOld['isDarkTheme']
     });
-    return newServers;
+    return true;
   }
 
-  initDataBase() async {
-    if (config.isWeb) {
+
+  Future<bool> deleteServer(BackendServer server) async {
+    Map configOld = await getAppConfig();
+    await store.drop(db);
+    List<Map> newServers = [];   
+    for (Map s in configOld['servers']) {
+      if(server.name != s['name'])
+      {newServers.add(s);}
+    }
+    await store.add(db, <String, Object?>{
+      'language': configOld['language'],
+      'notification': configOld['notification'],
+      'accent_color': configOld['accent_color'],
+      'servers': newServers,
+      'localPass': configOld['localPass'],
+      'sendHotkeyCtrl': configOld['sendHotkeyCtrl'],
+      'backgroundAsset': configOld['backgroundAsset'],
+      'isDarkTheme': configOld['isDarkTheme']
+    });
+    return true;
+  }
+
+  Future<bool> selectServer(String name) async {
+    Map configOld = await getAppConfig();
+    await store.drop(db);
+    List<Map> newServers = [];
+    for (Map s in configOld['servers']) {
+      if(s['name']==config.server.name)
+      {
+        newServers.add({'name': s['name'], 'address':s['address'], 'port': s['port'], 'refreshToken': s['refreshToken'], 'select': false});
+      }
+      if(s['name']== name)
+      {
+        newServers.add({'name': s['name'], 'address':s['address'], 'port': s['port'], 'refreshToken': s['refreshToken'], 'select': true});
+      }
+      if(s['name']!=config.server.name&&s['name']!= name)
+      {newServers.add(s);}
+    }
+    await store.add(db, <String, Object?>{
+      'language': configOld['language'],
+      'notification': configOld['notification'],
+      'accent_color': configOld['accent_color'],
+      'servers': newServers,
+      'localPass': configOld['localPass'],
+      'sendHotkeyCtrl': configOld['sendHotkeyCtrl'],
+      'backgroundAsset': configOld['backgroundAsset'],
+      'isDarkTheme': configOld['isDarkTheme']
+    });
+    return true;
+  }
+
+  initDataBase(bool isWeb, bool resetConfig) async {
+    if (isWeb) {
       store = intMapStoreFactory.store();
       factory = databaseFactoryWeb;
       db = await factory.openDatabase('schat_local_storage');
 
       List<int> listKeys = await store.findKeys(db);
-      if (listKeys.isEmpty) {
+      if (listKeys.isEmpty||resetConfig) {
         await store.add(db, <String, Object?>{
           'language': 'ru',
           'notification': true,
-          'accent_color': 3960673141,
-          'servers': ['${Env.defaultServer}:${Env.defaultWebPort}'],
-          'accessToken': '',
-          'refreshToken': '',
+          'accent_color': 3038072426,
+          'servers': [
+            {'name': 'defaultServer', 'address':Env.defaultServer, 'port': Env.defaultWebPort, 'refreshToken': '', 'select': true}
+          ],
           'localPass': '',
           'sendHotkeyCtrl': true,
           'backgroundAsset': 'background1.jpg',
+          'isDarkTheme': true
         });
       }
     } else {
@@ -189,17 +214,18 @@ class LocalStorage {
       );
       store = intMapStoreFactory.store();
       List<int> listKeys = await store.findKeys(db);
-      if (listKeys.isEmpty) {
+      if (listKeys.isEmpty||resetConfig) {
         await store.add(db, <String, Object?>{
           'language': 'ru',
           'notification': true,
-          'accent_color': 3960673141,
-          'servers': ['${Env.defaultServer}:${Env.defaultPort}'],
-          'accessToken': '',
-          'refreshToken': '',
+          'accent_color': 3038072426,
+          'servers': [
+            {'name': 'defaultServer', 'address':Env.defaultServer, 'port': Env.defaultPort, 'refreshToken': '', 'select': true}
+          ],
           'localPass': '',
           'sendHotkeyCtrl': true,
           'backgroundAsset': 'background1.jpg',
+          'isDarkTheme': true
         });
       }
     }

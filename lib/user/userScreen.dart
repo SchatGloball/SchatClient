@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:schat2/allWidgets/infoDialog.dart';
 import '../AllSocial/postWidget.dart';
 import '../DataClasses/Post.dart';
 import '../DataClasses/UserData.dart';
@@ -7,7 +8,6 @@ import '../eventStore.dart';
 import '../generated/call.pb.dart';
 import '../generated/social.pb.dart';
 import '../imageViewer.dart';
-import '../СallService/callScreen.dart';
 
 
 
@@ -26,7 +26,7 @@ class _UserPage extends State<UserPage> {
 
   _UserPage({required this.userName});
 
-  User user = User(0, 'deleted', '');
+  User user = User(0, 'deleted', '', false);
   @override
   void initState() {
     findUser();
@@ -36,7 +36,7 @@ class _UserPage extends State<UserPage> {
 
 findUser()async
 {
-  Map res = await userApi.searchUser(userName);
+  Map res = await config.server.userApi.searchUser(userName);
   if (res.keys.first != 'Error' && res['users'].isNotEmpty) {
     for(var userFind in res['users'])
       {
@@ -44,7 +44,7 @@ findUser()async
           {
             setState(() {
               user = User(userFind.id, userFind.username,
-                  userFind.imageAvatar);
+                  userFind.imageAvatar, userFind.isBot);
             });
           }
       }
@@ -55,7 +55,7 @@ findUser()async
 
   getUserPosts(int offset)async
   {
-    List<PostDto> p = await socialApi.getUserPosts(user.id, offset);
+    List<PostDto> p = await config.server.socialApi.getUserPosts(user.id, offset);
     for(PostDto post in p)
     {
       userPosts.add(PostData(post));
@@ -68,7 +68,15 @@ findUser()async
 
   @override
   Widget build(BuildContext context) {
-    return Stack(children: [
+    return 
+    LayoutBuilder(
+      builder: (context, constraints) {
+        final screenSize = MediaQuery.of(context).size;
+        double size = screenSize.width > screenSize.height?config.maxHeightWidescreen:0.95;
+        return
+    
+    
+    Stack(children: [
       Image.asset(
         'assets/${config.backgroundAsset}',
         height: MediaQuery.of(context).size.height,
@@ -86,7 +94,10 @@ findUser()async
                     automaticallyImplyLeading: false,
                   ),
         backgroundColor: Colors.transparent,
-        body: Column(
+        body: 
+        Center(child: SizedBox(
+         width: MediaQuery.of(context).size.width * size, 
+child: Column(
           children: [
             Container(
               height: MediaQuery.of(context).size.height * 0.29 - kToolbarHeight,
@@ -124,6 +135,7 @@ findUser()async
                     ),
                   Column(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    
                     children: [
 
                       Text(user.userName,
@@ -132,10 +144,8 @@ findUser()async
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
                           )),
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                        crossAxisAlignment: CrossAxisAlignment.center,
-                                        mainAxisSize: MainAxisSize.max,
+                           Row(
+                                     
                                         children: [
                                           IconButton(onPressed: ()async{
                                             if(user.dialogToUser)
@@ -157,24 +167,33 @@ findUser()async
                                               }
                                             else
                                               {
-                                                await chatApi.createChat('', [{'userName': userGlobal.userName, 'imageAvatar': userGlobal.imageAvatar}, {'userName': user.userName, 'imageAvatar': user.imageAvatar}]);
+                                                await config.server.chatApi.createChat('', [{'userName': config.server.userGlobal.userName, 'imageAvatar': config.server.userGlobal.imageAvatar}, {'userName': user.userName, 'imageAvatar': user.imageAvatar}]);
                                                 setState(() {
                                                   user.dialogToUser;
                                                 });
                                               }
                                           }, icon: const Icon(Icons.message), color: config.accentColor, iconSize: 30, style: ButtonStyle(backgroundColor: WidgetStateProperty.all(Colors.white60),),),
+                                          const Padding(padding: EdgeInsets.symmetric(horizontal: 3)),
                                         IconButton(onPressed: ()async{
-                                         final Map call = await callApi.createCall([UserDto(username: user.userName, imageAvatar: user.imageAvatar)], false);
-                                          activeCall = call['status'];
+                                         final String call = await config.server.callApi.createCall([UserDto(username: user.userName, imageAvatar: user.imageAvatar)], false);
+                                         if(call == 'The user is busy')
+                                         {
+                                          infoDialog(context, call);
+                                         }
+                                         else
+                                         {
+ activeCall = call;
+                                         }
+                                         
                                           }, icon: const Icon(Icons.phone), color: config.accentColor, iconSize: 30, style: ButtonStyle(backgroundColor: WidgetStateProperty.all(Colors.white60),),)
                                       ],)
+                                      
                     ],)
 
                 ],
               ),
             ),
-            SizedBox(
-              height: MediaQuery.of(context).size.height * 0.7 - kToolbarHeight,
+            Expanded(
               child: ListView.builder(
                 itemCount: userPosts.length,
                 itemBuilder: (context, index) {
@@ -184,8 +203,13 @@ findUser()async
             )
           ],
         ),
+
+        ),)
+        
+        
+        ,
       )
-    ]);
+    ]);});
   }
 
 }

@@ -21,4 +21,8 @@ class PlayerAudio
     await player.play(UrlSource(urlAudio, mimeType: 'audio/wav'));
     await player.resume();
   }
+  stop()
+  {
+    player.stop();
+  }
 }

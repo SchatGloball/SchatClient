@@ -1,14 +1,14 @@
+// This is a generated file - do not edit.
 //
-//  Generated code. Do not modify.
-//  source: call.proto
-//
+// Generated from call.proto.
+
 // @dart = 3.3
 
 // ignore_for_file: annotate_overrides, camel_case_types, comment_references
 // ignore_for_file: constant_identifier_names
 // ignore_for_file: curly_braces_in_flow_control_structures
 // ignore_for_file: deprecated_member_use_from_same_package, library_prefixes
-// ignore_for_file: non_constant_identifier_names
+// ignore_for_file: non_constant_identifier_names, prefer_relative_imports
 
 import 'dart:core' as $core;
 
@@ -16,10 +16,7 @@ import 'package:protobuf/protobuf.dart' as $pb;
 
 export 'package:protobuf/protobuf.dart' show GeneratedMessageGenericExtensions;
 
-enum RequestDto_OptionalData {
-  callData, 
-  notSet
-}
+enum RequestDto_OptionalData { callData, notSet }
 
 class RequestDto extends $pb.GeneratedMessage {
   factory RequestDto({
@@ -34,24 +31,32 @@ class RequestDto extends $pb.GeneratedMessage {
 
   RequestDto._();
 
-  factory RequestDto.fromBuffer($core.List<$core.int> data, [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(data, registry);
-  factory RequestDto.fromJson($core.String json, [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(json, registry);
+  factory RequestDto.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory RequestDto.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
 
-  static const $core.Map<$core.int, RequestDto_OptionalData> _RequestDto_OptionalDataByTag = {
-    2 : RequestDto_OptionalData.callData,
-    0 : RequestDto_OptionalData.notSet
+  static const $core.Map<$core.int, RequestDto_OptionalData>
+      _RequestDto_OptionalDataByTag = {
+    2: RequestDto_OptionalData.callData,
+    0: RequestDto_OptionalData.notSet
   };
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'RequestDto', createEmptyInstance: create)
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'RequestDto',
+      createEmptyInstance: create)
     ..oo(0, [2])
     ..aOS(1, _omitFieldNames ? '' : 'room')
-    ..aOM<CallDto>(2, _omitFieldNames ? '' : 'callData', protoName: 'callData', subBuilder: CallDto.create)
-    ..hasRequiredFields = false
-  ;
+    ..aOM<CallDto>(2, _omitFieldNames ? '' : 'callData',
+        protoName: 'callData', subBuilder: CallDto.create)
+    ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  RequestDto clone() => RequestDto()..mergeFromMessage(this);
+  RequestDto clone() => deepCopy();
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  RequestDto copyWith(void Function(RequestDto) updates) => super.copyWith((message) => updates(message as RequestDto)) as RequestDto;
+  RequestDto copyWith(void Function(RequestDto) updates) =>
+      super.copyWith((message) => updates(message as RequestDto)) as RequestDto;
 
   @$core.override
   $pb.BuilderInfo get info_ => _i;
@@ -60,12 +65,15 @@ class RequestDto extends $pb.GeneratedMessage {
   static RequestDto create() => RequestDto._();
   @$core.override
   RequestDto createEmptyInstance() => create();
-  static $pb.PbList<RequestDto> createRepeated() => $pb.PbList<RequestDto>();
   @$core.pragma('dart2js:noInline')
-  static RequestDto getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<RequestDto>(create);
+  static RequestDto getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<RequestDto>(create);
   static RequestDto? _defaultInstance;
 
-  RequestDto_OptionalData whichOptionalData() => _RequestDto_OptionalDataByTag[$_whichOneof(0)]!;
+  @$pb.TagNumber(2)
+  RequestDto_OptionalData whichOptionalData() =>
+      _RequestDto_OptionalDataByTag[$_whichOneof(0)]!;
+  @$pb.TagNumber(2)
   void clearOptionalData() => $_clearField($_whichOneof(0));
 
   @$pb.TagNumber(1)
@@ -89,10 +97,7 @@ class RequestDto extends $pb.GeneratedMessage {
   CallDto ensureCallData() => $_ensure(1);
 }
 
-enum MemberDto_OptionalMember {
-  memberImage, 
-  notSet
-}
+enum MemberDto_OptionalMember { memberImage, notSet }
 
 class MemberDto extends $pb.GeneratedMessage {
   factory MemberDto({
@@ -107,24 +112,31 @@ class MemberDto extends $pb.GeneratedMessage {
 
   MemberDto._();
 
-  factory MemberDto.fromBuffer($core.List<$core.int> data, [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(data, registry);
-  factory MemberDto.fromJson($core.String json, [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(json, registry);
+  factory MemberDto.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory MemberDto.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
 
-  static const $core.Map<$core.int, MemberDto_OptionalMember> _MemberDto_OptionalMemberByTag = {
-    2 : MemberDto_OptionalMember.memberImage,
-    0 : MemberDto_OptionalMember.notSet
+  static const $core.Map<$core.int, MemberDto_OptionalMember>
+      _MemberDto_OptionalMemberByTag = {
+    2: MemberDto_OptionalMember.memberImage,
+    0: MemberDto_OptionalMember.notSet
   };
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'MemberDto', createEmptyInstance: create)
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'MemberDto',
+      createEmptyInstance: create)
     ..oo(0, [2])
     ..aOS(1, _omitFieldNames ? '' : 'memberUsername')
     ..aOS(2, _omitFieldNames ? '' : 'memberImage')
-    ..hasRequiredFields = false
-  ;
+    ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  MemberDto clone() => MemberDto()..mergeFromMessage(this);
+  MemberDto clone() => deepCopy();
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  MemberDto copyWith(void Function(MemberDto) updates) => super.copyWith((message) => updates(message as MemberDto)) as MemberDto;
+  MemberDto copyWith(void Function(MemberDto) updates) =>
+      super.copyWith((message) => updates(message as MemberDto)) as MemberDto;
 
   @$core.override
   $pb.BuilderInfo get info_ => _i;
@@ -133,12 +145,15 @@ class MemberDto extends $pb.GeneratedMessage {
   static MemberDto create() => MemberDto._();
   @$core.override
   MemberDto createEmptyInstance() => create();
-  static $pb.PbList<MemberDto> createRepeated() => $pb.PbList<MemberDto>();
   @$core.pragma('dart2js:noInline')
-  static MemberDto getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<MemberDto>(create);
+  static MemberDto getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<MemberDto>(create);
   static MemberDto? _defaultInstance;
 
-  MemberDto_OptionalMember whichOptionalMember() => _MemberDto_OptionalMemberByTag[$_whichOneof(0)]!;
+  @$pb.TagNumber(2)
+  MemberDto_OptionalMember whichOptionalMember() =>
+      _MemberDto_OptionalMemberByTag[$_whichOneof(0)]!;
+  @$pb.TagNumber(2)
   void clearOptionalMember() => $_clearField($_whichOneof(0));
 
   @$pb.TagNumber(1)
@@ -171,18 +186,25 @@ class ResponseDto extends $pb.GeneratedMessage {
 
   ResponseDto._();
 
-  factory ResponseDto.fromBuffer($core.List<$core.int> data, [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(data, registry);
-  factory ResponseDto.fromJson($core.String json, [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(json, registry);
+  factory ResponseDto.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory ResponseDto.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
 
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'ResponseDto', createEmptyInstance: create)
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'ResponseDto',
+      createEmptyInstance: create)
     ..aOS(1, _omitFieldNames ? '' : 'message')
-    ..hasRequiredFields = false
-  ;
+    ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  ResponseDto clone() => ResponseDto()..mergeFromMessage(this);
+  ResponseDto clone() => deepCopy();
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  ResponseDto copyWith(void Function(ResponseDto) updates) => super.copyWith((message) => updates(message as ResponseDto)) as ResponseDto;
+  ResponseDto copyWith(void Function(ResponseDto) updates) =>
+      super.copyWith((message) => updates(message as ResponseDto))
+          as ResponseDto;
 
   @$core.override
   $pb.BuilderInfo get info_ => _i;
@@ -191,9 +213,9 @@ class ResponseDto extends $pb.GeneratedMessage {
   static ResponseDto create() => ResponseDto._();
   @$core.override
   ResponseDto createEmptyInstance() => create();
-  static $pb.PbList<ResponseDto> createRepeated() => $pb.PbList<ResponseDto>();
   @$core.pragma('dart2js:noInline')
-  static ResponseDto getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<ResponseDto>(create);
+  static ResponseDto getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ResponseDto>(create);
   static ResponseDto? _defaultInstance;
 
   @$pb.TagNumber(1)
@@ -206,10 +228,7 @@ class ResponseDto extends $pb.GeneratedMessage {
   void clearMessage() => $_clearField(1);
 }
 
-enum UpdateDTO_OptionalData {
-  callData, 
-  notSet
-}
+enum UpdateDTO_OptionalData { callData, notSet }
 
 class UpdateDTO extends $pb.GeneratedMessage {
   factory UpdateDTO({
@@ -230,27 +249,36 @@ class UpdateDTO extends $pb.GeneratedMessage {
 
   UpdateDTO._();
 
-  factory UpdateDTO.fromBuffer($core.List<$core.int> data, [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(data, registry);
-  factory UpdateDTO.fromJson($core.String json, [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(json, registry);
+  factory UpdateDTO.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory UpdateDTO.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
 
-  static const $core.Map<$core.int, UpdateDTO_OptionalData> _UpdateDTO_OptionalDataByTag = {
-    5 : UpdateDTO_OptionalData.callData,
-    0 : UpdateDTO_OptionalData.notSet
+  static const $core.Map<$core.int, UpdateDTO_OptionalData>
+      _UpdateDTO_OptionalDataByTag = {
+    5: UpdateDTO_OptionalData.callData,
+    0: UpdateDTO_OptionalData.notSet
   };
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'UpdateDTO', createEmptyInstance: create)
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'UpdateDTO',
+      createEmptyInstance: create)
     ..oo(0, [5])
-    ..pc<UserDto>(1, _omitFieldNames ? '' : 'users', $pb.PbFieldType.PM, subBuilder: UserDto.create)
+    ..pPM<UserDto>(1, _omitFieldNames ? '' : 'users',
+        subBuilder: UserDto.create)
     ..aOB(2, _omitFieldNames ? '' : 'video')
     ..aOB(3, _omitFieldNames ? '' : 'exitCall', protoName: 'exitCall')
     ..aOS(4, _omitFieldNames ? '' : 'room')
-    ..aOM<CallDto>(5, _omitFieldNames ? '' : 'callData', protoName: 'callData', subBuilder: CallDto.create)
-    ..hasRequiredFields = false
-  ;
+    ..aOM<CallDto>(5, _omitFieldNames ? '' : 'callData',
+        protoName: 'callData', subBuilder: CallDto.create)
+    ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  UpdateDTO clone() => UpdateDTO()..mergeFromMessage(this);
+  UpdateDTO clone() => deepCopy();
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  UpdateDTO copyWith(void Function(UpdateDTO) updates) => super.copyWith((message) => updates(message as UpdateDTO)) as UpdateDTO;
+  UpdateDTO copyWith(void Function(UpdateDTO) updates) =>
+      super.copyWith((message) => updates(message as UpdateDTO)) as UpdateDTO;
 
   @$core.override
   $pb.BuilderInfo get info_ => _i;
@@ -259,12 +287,15 @@ class UpdateDTO extends $pb.GeneratedMessage {
   static UpdateDTO create() => UpdateDTO._();
   @$core.override
   UpdateDTO createEmptyInstance() => create();
-  static $pb.PbList<UpdateDTO> createRepeated() => $pb.PbList<UpdateDTO>();
   @$core.pragma('dart2js:noInline')
-  static UpdateDTO getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<UpdateDTO>(create);
+  static UpdateDTO getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<UpdateDTO>(create);
   static UpdateDTO? _defaultInstance;
 
-  UpdateDTO_OptionalData whichOptionalData() => _UpdateDTO_OptionalDataByTag[$_whichOneof(0)]!;
+  @$pb.TagNumber(5)
+  UpdateDTO_OptionalData whichOptionalData() =>
+      _UpdateDTO_OptionalDataByTag[$_whichOneof(0)]!;
+  @$pb.TagNumber(5)
   void clearOptionalData() => $_clearField($_whichOneof(0));
 
   @$pb.TagNumber(1)
@@ -322,19 +353,25 @@ class UserDto extends $pb.GeneratedMessage {
 
   UserDto._();
 
-  factory UserDto.fromBuffer($core.List<$core.int> data, [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(data, registry);
-  factory UserDto.fromJson($core.String json, [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(json, registry);
+  factory UserDto.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory UserDto.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
 
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'UserDto', createEmptyInstance: create)
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'UserDto',
+      createEmptyInstance: create)
     ..aOS(1, _omitFieldNames ? '' : 'username')
     ..aOS(2, _omitFieldNames ? '' : 'imageAvatar')
-    ..hasRequiredFields = false
-  ;
+    ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  UserDto clone() => UserDto()..mergeFromMessage(this);
+  UserDto clone() => deepCopy();
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  UserDto copyWith(void Function(UserDto) updates) => super.copyWith((message) => updates(message as UserDto)) as UserDto;
+  UserDto copyWith(void Function(UserDto) updates) =>
+      super.copyWith((message) => updates(message as UserDto)) as UserDto;
 
   @$core.override
   $pb.BuilderInfo get info_ => _i;
@@ -343,9 +380,9 @@ class UserDto extends $pb.GeneratedMessage {
   static UserDto create() => UserDto._();
   @$core.override
   UserDto createEmptyInstance() => create();
-  static $pb.PbList<UserDto> createRepeated() => $pb.PbList<UserDto>();
   @$core.pragma('dart2js:noInline')
-  static UserDto getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<UserDto>(create);
+  static UserDto getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<UserDto>(create);
   static UserDto? _defaultInstance;
 
   @$pb.TagNumber(1)
@@ -369,30 +406,38 @@ class UserDto extends $pb.GeneratedMessage {
 
 class CallDto extends $pb.GeneratedMessage {
   factory CallDto({
-    $core.List<$core.int>? soundData,
-    $core.List<$core.int>? videoData,
+    $core.Iterable<$core.int>? soundData,
+    $core.Iterable<$core.int>? videoData,
   }) {
     final result = create();
-    if (soundData != null) result.soundData = soundData;
-    if (videoData != null) result.videoData = videoData;
+    if (soundData != null) result.soundData.addAll(soundData);
+    if (videoData != null) result.videoData.addAll(videoData);
     return result;
   }
 
   CallDto._();
 
-  factory CallDto.fromBuffer($core.List<$core.int> data, [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(data, registry);
-  factory CallDto.fromJson($core.String json, [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(json, registry);
+  factory CallDto.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory CallDto.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
 
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'CallDto', createEmptyInstance: create)
-    ..a<$core.List<$core.int>>(1, _omitFieldNames ? '' : 'soundData', $pb.PbFieldType.OY, protoName: 'soundData')
-    ..a<$core.List<$core.int>>(2, _omitFieldNames ? '' : 'videoData', $pb.PbFieldType.OY, protoName: 'videoData')
-    ..hasRequiredFields = false
-  ;
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'CallDto',
+      createEmptyInstance: create)
+    ..p<$core.int>(1, _omitFieldNames ? '' : 'soundData', $pb.PbFieldType.K3,
+        protoName: 'soundData')
+    ..p<$core.int>(2, _omitFieldNames ? '' : 'videoData', $pb.PbFieldType.K3,
+        protoName: 'videoData')
+    ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  CallDto clone() => CallDto()..mergeFromMessage(this);
+  CallDto clone() => deepCopy();
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  CallDto copyWith(void Function(CallDto) updates) => super.copyWith((message) => updates(message as CallDto)) as CallDto;
+  CallDto copyWith(void Function(CallDto) updates) =>
+      super.copyWith((message) => updates(message as CallDto)) as CallDto;
 
   @$core.override
   $pb.BuilderInfo get info_ => _i;
@@ -401,30 +446,19 @@ class CallDto extends $pb.GeneratedMessage {
   static CallDto create() => CallDto._();
   @$core.override
   CallDto createEmptyInstance() => create();
-  static $pb.PbList<CallDto> createRepeated() => $pb.PbList<CallDto>();
   @$core.pragma('dart2js:noInline')
-  static CallDto getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<CallDto>(create);
+  static CallDto getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<CallDto>(create);
   static CallDto? _defaultInstance;
 
   @$pb.TagNumber(1)
-  $core.List<$core.int> get soundData => $_getN(0);
-  @$pb.TagNumber(1)
-  set soundData($core.List<$core.int> value) => $_setBytes(0, value);
-  @$pb.TagNumber(1)
-  $core.bool hasSoundData() => $_has(0);
-  @$pb.TagNumber(1)
-  void clearSoundData() => $_clearField(1);
+  $pb.PbList<$core.int> get soundData => $_getList(0);
 
   @$pb.TagNumber(2)
-  $core.List<$core.int> get videoData => $_getN(1);
-  @$pb.TagNumber(2)
-  set videoData($core.List<$core.int> value) => $_setBytes(1, value);
-  @$pb.TagNumber(2)
-  $core.bool hasVideoData() => $_has(1);
-  @$pb.TagNumber(2)
-  void clearVideoData() => $_clearField(2);
+  $pb.PbList<$core.int> get videoData => $_getList(1);
 }
 
-
-const $core.bool _omitFieldNames = $core.bool.fromEnvironment('protobuf.omit_field_names');
-const $core.bool _omitMessageNames = $core.bool.fromEnvironment('protobuf.omit_message_names');
+const $core.bool _omitFieldNames =
+    $core.bool.fromEnvironment('protobuf.omit_field_names');
+const $core.bool _omitMessageNames =
+    $core.bool.fromEnvironment('protobuf.omit_message_names');

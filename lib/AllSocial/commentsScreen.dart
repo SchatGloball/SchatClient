@@ -76,10 +76,10 @@ class _CommentsPage extends State<CommentsPage> {
 
 
   sendComment() async {
-    ResponseDto res = await socialApi.createComment(CommentDto(id: 0, body: body, stickerContent: 0, authorId: userGlobal.id, authorName: userGlobal.userName, postId: post.id, likes: [], data: []), filesPick);
+    ResponseDto res = await config.server.socialApi.createComment(CommentDto(id: 0, body: body, stickerContent: 0, authorId: config.server.userGlobal.id, authorName: config.server.userGlobal.userName, postId: post.id, likes: [], data: []), filesPick);
     if(res.success)
       {
-        PostDto p = await  socialApi.getOnePost(post.id);
+        PostDto p = await  config.server.socialApi.getOnePost(post.id);
         setState(() {
           post = PostData(p);
           initPost();
@@ -99,20 +99,19 @@ class _CommentsPage extends State<CommentsPage> {
         fit: BoxFit.cover,
       ),
       Scaffold(
-        backgroundColor: Colors.transparent,
+        
         appBar: AppBar(
-          backgroundColor: config.accentColor,
+          
           leading: BackButton(onPressed: () {
             Navigator.of(context).pop();
           }),
           automaticallyImplyLeading: false,
-          title: Text('comments'),
+          title: Text('comments', style: Theme.of(context).textTheme.titleLarge,),
         ),
         body: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   Expanded(
-                    //height: MediaQuery.of(context).size.height*0.3,
                     child:
                     ListView(
                       children: [Container(
@@ -168,15 +167,11 @@ class _CommentsPage extends State<CommentsPage> {
                                 physics: const NeverScrollableScrollPhysics(),
                                 // запрещает прокрутку списка
                               ),
-                              GridView.builder(
+                              ListView.builder(
                                 itemCount: post.audioContent.length,
                                 itemBuilder: (context, indexTwo) {
                                   return AudioPage(urlAudio: post.audioContent[indexTwo]);
                                 },
-                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 1, // количество виджетов в ряду
-                                  childAspectRatio: 5 / 1,
-                                ),
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),
                                 // запрещает прокрутку списка
@@ -191,14 +186,17 @@ class _CommentsPage extends State<CommentsPage> {
                                           'file.${post.documentContent[indexTwo].split('?X').first.split('.').last}',
                                           style: Theme.of(context).textTheme.titleLarge),
                                       IconButton(
-                                          onPressed: () {
-                                            downloadFile(
-                                                post.documentContent[indexTwo]
+                                          onPressed: () async{
+
+                                            await downloadFile(
+  fileExtension: post.documentContent[indexTwo]
                                                     .split('?X')
                                                     .first
                                                     .split('.')
                                                     .last,
-                                                post.documentContent[indexTwo]);
+  url:  post.documentContent[indexTwo],
+);
+                                      
                                           },
                                           icon: const Icon(
                                             Icons.save_alt,
@@ -245,8 +243,6 @@ class _CommentsPage extends State<CommentsPage> {
 
 
                   Expanded(
-                    // height:
-                    // MediaQuery.of(context).size.height * 0.52 - kToolbarHeight,
                     child: ListView.builder(
                       shrinkWrap: false,
                       itemCount: post.comments.length,
@@ -296,9 +292,9 @@ class _CommentsPage extends State<CommentsPage> {
                                   },
                                   child: filesPick.isEmpty
                                       ? Icon(Icons.add_a_photo_outlined,
-                                      color: config.accentColor, size: 40)
+                                       size: 40)
                                       : Icon(Icons.delete_forever,
-                                      color: config.accentColor, size: 40),
+                                       size: 40),
                                 ),
                               ),
                             ],
@@ -348,7 +344,6 @@ class _CommentsPage extends State<CommentsPage> {
                               child: Icon(
                                 Icons.send,
                                 size: 40,
-                                color: config.accentColor,
                               ),
                             ),
                           )

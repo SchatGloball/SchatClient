@@ -1,7 +1,4 @@
-import 'dart:io';
-import 'dart:typed_data';
 
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:schat2/allWidgets/infoDialog.dart';
 import '../DataClasses/Post.dart';
@@ -9,7 +6,7 @@ import '../DataClasses/file.dart';
 import '../eventStore.dart';
 import '../generated/social.pb.dart';
 import '../localization/localization.dart';
-import '../user/userScreen.dart';
+
 
 
 
@@ -54,7 +51,7 @@ List<FileData> filesPick = [];
         post.tags = tags.split(' ');
       }
     try{
-      final ResponseDto res = await socialApi.createPost(post, filesPick);
+      final ResponseDto res = await config.server.socialApi.createPost(post, filesPick);
       if(res.success==true)
         {
           Navigator.pop(context, int.parse(res.message));
@@ -72,6 +69,12 @@ List<FileData> filesPick = [];
   @override
   Widget build(BuildContext context) {
     return
+    LayoutBuilder(
+      builder: (context, constraints) {
+        final screenSize = MediaQuery.of(context).size;
+                double size = screenSize.width > screenSize.height?config.maxHeightWidescreen:0.95;
+
+        return
       Stack(
           children: [
             Image.asset(
@@ -88,7 +91,7 @@ List<FileData> filesPick = [];
             ),
             Scaffold(
                 appBar: AppBar(
-                  backgroundColor: config.accentColor,
+                  
                   leading: BackButton(
                       color: Colors.white54,
                       onPressed: (){
@@ -96,12 +99,12 @@ List<FileData> filesPick = [];
                   ),
                   automaticallyImplyLeading: false,
                 ),
-                backgroundColor: Colors.transparent,
+                
                 body:
                 Center(
                   child: Container(
-                    height: MediaQuery.of(context).size.height*0.95,
-                    width: MediaQuery.of(context).size.width*0.95,
+                    height: MediaQuery.of(context).size.height- kToolbarHeight,
+                    width: MediaQuery.of(context).size.width * size,
                     padding: const EdgeInsets.all(10),
                     color: Colors.black54,
                     child: Column(
@@ -134,7 +137,7 @@ List<FileData> filesPick = [];
                         ),
                         IconButton(onPressed: (){
                           pickFile();
-                        }, icon:  Icon(Icons.image_search_sharp, color: config.accentColor,)),
+                        }, icon:  Icon(Icons.image_search_sharp)),
                         ListView.builder(
                           itemCount: filesPick.length,
                           itemBuilder: (context, indexTwo) {
@@ -143,7 +146,7 @@ List<FileData> filesPick = [];
                                 Text(filesPick[indexTwo].name, style: Theme.of(context).textTheme.titleSmall,),
                                 IconButton(onPressed: (){setState(() {
                                   filesPick.removeAt(indexTwo);
-                                });}, icon: Icon(Icons.delete_forever, color: config.accentColor,))
+                                });}, icon: Icon(Icons.delete_forever))
                               ],);
 
                           },
@@ -169,7 +172,7 @@ List<FileData> filesPick = [];
 
 
             )
-          ]);
+          ]);});
   }
   showMyDialog(BuildContext context, text) {
     showDialog(

@@ -1,12 +1,9 @@
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
-
-import '../AllChatService/allChat.dart';
 import '../RegistrationService/registration.dart';
 import '../SettingsService/settingsScreen.dart';
 import '../eventStore.dart';
 import '../localization/localization.dart';
-import '../main.dart';
 
 
 class Login extends StatefulWidget {
@@ -22,6 +19,14 @@ class _Login extends State<Login> {
     super.initState();
   }
 
+  @override
+  void dispose()
+  {
+    super.dispose();
+  }
+
+
+
   String userEmail = '';
   String userPassword = '';
 
@@ -35,16 +40,14 @@ class _Login extends State<Login> {
   }
 
   login() async {
-    Map tokens = await userApi.userLogin(userEmail, userPassword);
-
-    if (tokens.keys.first == 'Error') {
-      showMyDialog(context, tokens['Error'].toString());
+    Map res = await config.server.login(userEmail, userPassword);
+    if (!res['success']) {
+      showMyDialog(context, res.toString(), res['success']);
     } else {
-      userGlobal.setTokens(tokens['accessToken'], tokens['refreshToken']);
       showMyDialog(
           context,
           Localization.localizationData[config.language]['loginScreen']
-              ['loginSuccess']);
+              ['loginSuccess'], res['success']);
     }
   }
 
@@ -58,7 +61,6 @@ class _Login extends State<Login> {
         fit: BoxFit.cover,
       ),
       Scaffold(
-        backgroundColor: Colors.transparent,
         body: Center(
             child: Container(
           width: MediaQuery.of(context).size.width / 1.3,
@@ -106,7 +108,7 @@ class _Login extends State<Login> {
                 width: MediaQuery.of(context).size.width / 1.5,
                 child: TextField(
                   style: Theme.of(context).textTheme.titleLarge,
-                  onChanged: (String value) {
+                  onChanged: (String value) async{
                     userPassword = value;
                     if (userPassword.length <= 5) {
                       setState(() {
@@ -118,6 +120,11 @@ class _Login extends State<Login> {
                       });
                     }
                   },
+                   onSubmitted: (value) {
+    if (validEmail && validPass) {
+      login();
+    }
+  },
                   obscureText: true,
                   decoration: InputDecoration(
                     labelStyle: Theme.of(context).textTheme.titleSmall,
@@ -175,22 +182,24 @@ class _Login extends State<Login> {
         )),
         floatingActionButton: FloatingActionButton(
           onPressed: () async {
-            Navigator.push(
+          await  Navigator.push(
                 context,
                 MaterialPageRoute(
                     builder: (BuildContext context) => const SettingsPage()));
+                    setState(() {
+                      
+                    });
           },
           backgroundColor: Colors.black54,
           child: Icon(
             Icons.settings_outlined,
-            color: config.accentColor,
           ),
         ),
       )
     ]);
   }
 
-  showMyDialog(BuildContext context, text) {
+  showMyDialog(BuildContext context, String text, bool success) {
     showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -203,10 +212,7 @@ class _Login extends State<Login> {
                 child: const Text('OK'),
                 onPressed: () {
                   Navigator.pop(context);
-                  Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) =>  InitialApp(checkLocalPass: false,)));
+                  Navigator.pop(context, success);
                 },
               ),
             ],

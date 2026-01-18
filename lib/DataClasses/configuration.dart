@@ -1,29 +1,55 @@
 import 'package:flutter/material.dart';
+import 'package:schat2/DataClasses/server.dart';
 
 
-import '../env.dart';
+
+
 
 class Configuration {
-  String language = 'en';
-  bool notification = true;
-  bool sendHotkeyCtrl = true;
+  Configuration(Map conf, {required bool isWeb})
+  {
+    
+language = conf['language']??'en';
+    notification = conf['notification']??true;
+    accentColor = Color(conf['accent_color'] ?? 3960673141);
+    sendHotkeyCtrl = conf['sendHotkeyCtrl'] ?? true;
+    localPass = conf['localPass'] ?? '';
+    backgroundAsset = conf['backgroundAsset'] ?? 'background1.jpg';
+    this.isWeb = isWeb;
+    for(Map s in conf['servers'])
+    {
+      if(s['select'])
+      {
+    server = BackendServer(s['port'], s['address'], s['refreshToken'],s['name'], isWeb: isWeb);
+      }
+    }
+   isDarkTheme = conf['isDarkTheme']??true;
+  }
+late BackendServer server;
+ late String language;
+ late bool notification;
+  late bool sendHotkeyCtrl;
   bool isWeb = false;
   bool widescreen = false;
   Color accentColor = Color(3960673141);
+  bool isDarkTheme = true;
   String localPass = '';
-  String server = Env.defaultServer;
-  int port = Env.defaultPort;
   String backgroundAsset = 'background1.jpg';
+  final double containerRadius = 8;
+final double maxHeightWidescreen = 0.4;
+// setThemeMode(bool isDark)async
+// {
+// isDarkTheme = isDark;
+// await storage.setConfig();
 
-  addConfig(Map config ) {
-    language = config['language'];
-    notification = config['notification'];
-    accentColor = Color(config['accent_color'] ?? 3960673141);
-    sendHotkeyCtrl = config['sendHotkeyCtrl'] ?? true;
-    localPass = config['localPass'] ?? '';
-    backgroundAsset = config['backgroundAsset'] ?? 'background1.jpg';
-  }
-
+// }
+// setAccentColor(Color accent_color, ThemeProvider provider) async {
+//   accentColor = accent_color;
+//   await storage.setConfig();
+  
+// print(accent_color.toARGB32());
+//    provider.updateAccentColor(accentColor);
+// }
 
   // String configToJSON() {
   //   return jsonEncode({

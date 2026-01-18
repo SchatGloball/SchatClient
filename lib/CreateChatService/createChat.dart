@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:schat2/DataClasses/chatData.dart';
+import 'package:schat2/DataClasses/file.dart';
+import 'package:schat2/allWidgets/infoDialog.dart';
+import 'package:schat2/env.dart';
+import 'package:schat2/generated/chats.pb.dart';
 import '../eventStore.dart';
 import '../localization/localization.dart';
 import '../user/userScreen.dart';
@@ -9,19 +14,31 @@ import '../user/userScreen.dart';
 
 class CreateChatPage extends StatefulWidget
 {
-  const CreateChatPage({super.key});
-
+   CreateChatPage({super.key, required this.chat});
+late Chat chat;
   @override
-  State<CreateChatPage> createState() => _CreateChatPage();
+  State<CreateChatPage> createState() => _CreateChatPage(chat: chat);
 }
 
 class _CreateChatPage extends State<CreateChatPage> {
+late Chat chat;
+_CreateChatPage({required this.chat});
 
 
+
+TextEditingController chatNameController = TextEditingController();
   @override
   void initState() {
     super.initState();
+    chatNameController.text = chat.name;
+    for (var m in chat.members) {
+members.add({'userName': m, 'imageAvatar': '', 'added': true, 'rootMember': true});
+    }
+    if(members.isEmpty)
+    {members.add({'userName': config.server.userGlobal.userName, 'imageAvatar': config.server.userGlobal.imageAvatar, 'added': true, 'rootMember': true});}
   }
+
+FileData fileImage = FileData('', [], '');
 
 int membersLength()
 {
@@ -35,8 +52,7 @@ int membersLength()
 
 
 
-  List<Map> members = [{'userName': userGlobal.userName, 'imageAvatar': userGlobal.imageAvatar, 'added': true}];
-  String chatName = '';
+  List<Map> members = [];
 
   searchUser(String memberName) async
   {
@@ -47,13 +63,13 @@ int membersLength()
           newMembers.add(value);
         }
     }
-    Map res = await userApi.searchUser(memberName);
+    Map res = await config.server.userApi.searchUser(memberName);
     if (res.keys.first == 'Error') {
 
     }
     else {
       for (var e in res['users']) {
-        newMembers.add({'userName': e.username, 'imageAvatar': e.imageAvatar, 'added': false});
+        newMembers.add({'userName': e.username, 'imageAvatar': e.imageAvatar, 'added': false, 'rootMember': false});
       }
     }
     members.clear();
@@ -78,6 +94,11 @@ sortMembers()
   @override
   Widget build(BuildContext context) {
     return
+     LayoutBuilder(
+      builder: (context, constraints) {
+        final screenSize = MediaQuery.of(context).size;
+        double size = screenSize.width > screenSize.height?config.maxHeightWidescreen:0.95;
+    return
       Stack(
           children: [
             Image.asset(
@@ -94,7 +115,7 @@ sortMembers()
             ),
             Scaffold(
                 appBar: AppBar(
-                  backgroundColor: config.accentColor,
+                 
                   leading: BackButton(
                       color: Colors.white54,
                       onPressed: (){
@@ -102,12 +123,15 @@ sortMembers()
                   ),
                   automaticallyImplyLeading: false,
                 ),
-                backgroundColor: Colors.transparent,
+             
                 body:
-                    Center(
+
+
+                SafeArea(child:
+                Center(
     child: Container(
-      height: MediaQuery.of(context).size.height*0.95,
-      width: MediaQuery.of(context).size.width*0.95,
+      height: MediaQuery.of(context).size.height - kToolbarHeight,
+      width: MediaQuery.of(context).size.width * size,
       padding: const EdgeInsets.all(10),
       color: Colors.black54,
       child: Column(
@@ -128,16 +152,9 @@ sortMembers()
             style: Theme.of(context).textTheme.titleLarge,
           ),
           Text(Localization
-              .localizationData[config.language]['createChatScreen']['findUsers'],
-              style: Theme.of(context).textTheme.titleMedium),
-          Text(Localization
               .localizationData[config.language]['createChatScreen']['members'],
               style: Theme.of(context).textTheme.titleMedium),
-          SizedBox(
-              height: MediaQuery
-                  .of(context)
-                  .size
-                  .height / 3.5,
+          Expanded(
               child: ListView.builder(
                 itemCount: members.length,
                 itemBuilder: (context, index) {
@@ -168,7 +185,7 @@ sortMembers()
                                   )
                               ]),
                               title: Text(members[index]['userName'], style: Theme.of(context).textTheme.titleMedium,),
-                              trailing: index !=0 ? IconButton(
+                              trailing: !members[index]['rootMember'] ? IconButton(
                                 color: Colors.white70,
                                 icon: members[index]['added'] ? const Icon(Icons.delete_forever) : const Icon(Icons.add),
                                 onPressed: () {
@@ -205,9 +222,10 @@ sortMembers()
           Column(children: [
             if(membersLength() > 2)
               TextField(
+                controller: chatNameController,
                 onChanged: (String value) {
                   setState(() {
-                    chatName = value;
+                    chat.name = value;
                   });
                 },
                 decoration: InputDecoration(
@@ -220,7 +238,7 @@ sortMembers()
           ],),
           Column(
             children: [
-              if(chatName == '' && membersLength() > 2)
+              if(chat.name == '' && membersLength() > 2)
                 Text(
                   Localization
                       .localizationData[config.language]['createChatScreen']['notFoundChatName'],
@@ -230,6 +248,38 @@ sortMembers()
                 )
             ],
           ),
+         const Padding(padding: EdgeInsetsGeometry.symmetric(vertical: 3)),
+          if(members.length>2)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [IconButton(onPressed: ()async{
+
+  try{
+    List<FileData> files = await pickFiles();
+    if(files.isNotEmpty && Env.image.contains(files.last.extension)) {
+      fileImage = files.last;
+      setState(() {
+        
+      });
+    }
+    else
+    {
+      infoDialog(context, 'Error file');
+    }
+    }
+  catch(e)
+  {
+infoDialog(context, e.toString());
+  }
+            }, icon: const Icon(Icons.image)), 
+            if(chat.chatImage.isNotEmpty && fileImage.data.isEmpty)
+            CircleAvatar(
+                                  backgroundImage: NetworkImage(
+                                      chat.chatImage),
+                                )
+            
+            ],
+          ), 
           Container(
               width: MediaQuery
                   .of(context)
@@ -237,37 +287,67 @@ sortMembers()
                   .width / 1.5,
               padding: const EdgeInsets.only(top: 8),
               child: ElevatedButton(onPressed:
-              (membersLength() == 2||membersLength() >= 3 && chatName != '') ?
+              (membersLength() == 2||membersLength() >= 3 && chat.name != '') ?
                   () async {
-
-                for (var element in members) {
-                  if(!element['added'])
+                    if(chat.id==-1)
                     {
-                      members.remove(element);
-                    }
-                }
+                      members.removeWhere((member) => !member['added']);
                 setState(() {
-
                 });
-                Map response = await chatApi.createChat(
-                    chatName, members);
+                Map response = await config.server.chatApi.createChat(
+                    chat.name, members);
                 if (response.keys.first == 'status') {
                   showMyDialog(context, 'Chat success');
                 }
                 else {
                   showMyDialog(context, response['Error']);
                 }
+                    }
+                    else
+                    {
+                      List<MemberDto> memb = [];
+List<String> mmm = [];
+                      for (var element in members) {
+                  if(element['added'])
+                    {
+                      mmm.add(element['userName']);
+                     
+                    }
+                }
+    mmm = List<String>.from(
+        mmm.toSet()); //оставляем только уникальные элементы
+
+ for (var element in mmm) {
+                  memb.add(MemberDto(memberUsername: element));
+                    }
+
+
+                        Map res = await  config.server.chatApi.editGroupChat(ChatDto(id: chat.id, name: chat.name,
+                      members: memb, authorId: chat.authorId.toString(), chatImage: '', image: fileImage.data));
+                  if(res.keys.first == 'Error')
+                  {
+                    showMyDialog(context, res.toString());
+                  }
+                  else
+                  {
+                    showMyDialog(context, res.toString());
+                  }
+                    }
+                
               } : null,
-                child: Text(Localization
-                    .localizationData[config.language]['createChatScreen']['goButton'],),
+                child: chat.id == -1 ? Text(Localization
+                    .localizationData[config.language]['createChatScreen']['goButton'],): Text(Localization
+                    .localizationData[config.language]['createChatScreen']['goEditButton'],),
               )),
         ],),
     ),
     )
+                )
+                    
 
 
                     )
-          ]);
+          ]);});
   }
   showMyDialog(BuildContext context, text) {
     showDialog(

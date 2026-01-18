@@ -71,6 +71,7 @@ message MessageDto
   bool forwarded = 12;
   string originalAuthor = 13;
   string originalDate = 14;
+  repeated string button = 15;
 
   oneof optional_message
   {

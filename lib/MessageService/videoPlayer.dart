@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
+// ignore: must_be_immutable
 class VideoPage extends StatefulWidget {
   late String urlVideo;
   VideoPage({super.key, required this.urlVideo});

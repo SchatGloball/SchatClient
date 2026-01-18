@@ -117,14 +117,16 @@ class _CommentWidget extends State<CommentWidget> {
                           'file.${comment.documentContent[indexTwo].split('?X').first.split('.').last}',
                           style: Theme.of(context).textTheme.titleLarge),
                       IconButton(
-                          onPressed: () {
-                            downloadFile(
-                                comment.documentContent[indexTwo]
+                          onPressed: ()async {
+                             await downloadFile(
+  fileExtension: comment.documentContent[indexTwo]
                                     .split('?X')
                                     .first
                                     .split('.')
                                     .last,
-                                comment.documentContent[indexTwo]);
+  url:  comment.documentContent[indexTwo],
+);
+                            
                           },
                           icon: const Icon(
                             Icons.save_alt,
@@ -162,7 +164,7 @@ class _CommentWidget extends State<CommentWidget> {
                     )),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
-                children: [Text(comment.dateComment, style: Theme.of(context).textTheme.titleSmall)],),
+                children: [Text(comment.authorName, style: Theme.of(context).textTheme.titleSmall), const Padding(padding: EdgeInsetsGeometry.symmetric(horizontal: 5)), Text(comment.dateComment, style: Theme.of(context).textTheme.titleSmall)],),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
@@ -174,24 +176,24 @@ class _CommentWidget extends State<CommentWidget> {
                                 builder: (BuildContext context) => UserListPage(userList: comment.likes)));
                       },
                       onPressed: () async{
-                    ResponseDto res = await socialApi.likeComment(CommentDto(id: comment.id));
-                    if(res.success&&comment.likes.contains(userGlobal.userName))
+                    ResponseDto res = await config.server.socialApi.likeComment(CommentDto(id: comment.id));
+                    if(res.success&&comment.likes.contains(config.server.userGlobal.userName))
                       {
                         setState(() {
-                          comment.likes.remove(userGlobal.userName);
+                          comment.likes.remove(config.server.userGlobal.userName);
                         });
                         return;
                       }
-                    if(res.success&&!comment.likes.contains(userGlobal.userName))
+                    if(res.success&&!comment.likes.contains(config.server.userGlobal.userName))
                     {
                       setState(() {
-                        comment.likes.add(userGlobal.userName);
+                        comment.likes.add(config.server.userGlobal.userName);
                       });
                     }
-                  }, icon: Icon(Icons.favorite_rounded, color: config.accentColor,)), Text('${comment.likes.length}', style: Theme.of(context).textTheme.titleSmall),],),),
-                  if(comment.authorId == userGlobal.id)
+                  }, icon: Icon(Icons.favorite_rounded)), Text('${comment.likes.length}', style: Theme.of(context).textTheme.titleSmall),],),),
+                  if(comment.authorId == config.server.userGlobal.id)
                     SizedBox(child: IconButton(onPressed: (){
-                    }, icon: Icon(Icons.delete_forever, color: config.accentColor,)),),
+                    }, icon: Icon(Icons.delete_forever)),),
                 ],),
             ],
           ),

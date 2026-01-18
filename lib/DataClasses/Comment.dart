@@ -47,6 +47,7 @@ class CommentData {
         int.parse(comment.dateComment.split(' ')[1].split(':')[1]),
         int.parse(
             comment.dateComment.split(' ')[1].split(':')[2].split('.')[0]));
+            likes.addAll(comment.likes);
   }
 
   late final int id;

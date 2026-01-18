@@ -21,56 +21,41 @@ class _SendSticker extends State<SendSticker> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: MediaQuery.of(context).size.height * 0.17 - kToolbarHeight,
-      padding: const EdgeInsets.only(left: 4, right: 4),
       decoration: BoxDecoration(
         color: Colors.black54,
         borderRadius: BorderRadius.circular(5),
       ),
       child: Row(
         children: [
-          SizedBox(
-            width: MediaQuery.of(context).size.width * 0.02,
-            height: MediaQuery.of(context).size.height * 0.17,
-            child: InkWell(
-              onTap: () {
-                updateParent();
-              },
-              child: Icon(
-                Icons.highlight_remove,
-                color: config.accentColor,
-                size: 40,
+          Column(
+            children: [
+              IconButton(
+                onPressed: () {
+                  updateParent();
+                },
+                icon: Icon(Icons.highlight_remove),
               ),
-            ),
-          ),
-          SizedBox(
-            width: MediaQuery.of(context).size.width * 0.02,
-            height: MediaQuery.of(context).size.height * 0.17,
-            child: InkWell(
-              onTap: () {
-                if (selectStickerPack + 1 < config.stickersAssets.length) {
-                  setState(() {
-                    ++selectStickerPack;
-                  });
-                } else {
-                  setState(() {
-                    selectStickerPack = 0;
-                  });
-                }
-              },
-              child: Lottie.asset(
-                'assets/${config.stickersAssets[selectStickerPack].first}.json',
+              IconButton(
+                onPressed: () {
+                  if (selectStickerPack + 1 < config.stickersAssets.length) {
+                    setState(() {
+                      ++selectStickerPack;
+                    });
+                  } else {
+                    setState(() {
+                      selectStickerPack = 0;
+                    });
+                  }
+                },
+                icon: Icon(Icons.skip_next),
               ),
-            ),
+            ],
           ),
-          SizedBox(
+          Expanded(
             child: SizedBox(
-              width: MediaQuery.of(context).size.width * 0.44,
-              height: MediaQuery.of(context).size.height * 0.1,
+              height: 100,
               child: Scrollbar(
                 controller: stickerScrollController,
-                // thickness: 12.0,
-                // radius: Radius.circular(8.0),
                 child: GridView.builder(
                   scrollDirection: Axis.horizontal,
                   controller: stickerScrollController,
@@ -78,7 +63,7 @@ class _SendSticker extends State<SendSticker> {
                   itemBuilder: (context, indexTwo) {
                     return InkWell(
                       onTap: () async {
-                        Map send = await chatApi.sendMessages(
+                        Map send = await config.server.chatApi.sendMessages(
                           chatId,
                           'sticker${config.stickersAssets[selectStickerPack][indexTwo]}',
                           [],
@@ -99,7 +84,6 @@ class _SendSticker extends State<SendSticker> {
                     crossAxisCount: 1, // количество виджетов в ряду
                     childAspectRatio: 5 / 5,
                   ),
-                  // запрещает прокрутку списка
                 ),
               ),
             ),

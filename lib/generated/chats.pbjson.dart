@@ -1,14 +1,15 @@
+// This is a generated file - do not edit.
 //
-//  Generated code. Do not modify.
-//  source: chats.proto
-//
+// Generated from chats.proto.
+
 // @dart = 3.3
 
 // ignore_for_file: annotate_overrides, camel_case_types, comment_references
 // ignore_for_file: constant_identifier_names
 // ignore_for_file: curly_braces_in_flow_control_structures
 // ignore_for_file: deprecated_member_use_from_same_package, library_prefixes
-// ignore_for_file: non_constant_identifier_names
+// ignore_for_file: non_constant_identifier_names, prefer_relative_imports
+// ignore_for_file: unused_import
 
 import 'dart:convert' as $convert;
 import 'dart:core' as $core;
@@ -20,8 +21,8 @@ const RequestDto$json = {
 };
 
 /// Descriptor for `RequestDto`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List requestDtoDescriptor = $convert.base64Decode(
-    'CgpSZXF1ZXN0RHRv');
+final $typed_data.Uint8List requestDtoDescriptor =
+    $convert.base64Decode('CgpSZXF1ZXN0RHRv');
 
 @$core.Deprecated('Use searchRequestDtoDescriptor instead')
 const SearchRequestDto$json = {
@@ -73,8 +74,22 @@ const ChatDto$json = {
     {'1': 'id', '3': 1, '4': 1, '5': 5, '10': 'id'},
     {'1': 'name', '3': 2, '4': 1, '5': 9, '10': 'name'},
     {'1': 'author_id', '3': 3, '4': 1, '5': 9, '10': 'authorId'},
-    {'1': 'members', '3': 6, '4': 3, '5': 11, '6': '.MemberDto', '10': 'members'},
-    {'1': 'messages', '3': 4, '4': 3, '5': 11, '6': '.MessageDto', '10': 'messages'},
+    {
+      '1': 'members',
+      '3': 6,
+      '4': 3,
+      '5': 11,
+      '6': '.MemberDto',
+      '10': 'members'
+    },
+    {
+      '1': 'messages',
+      '3': 4,
+      '4': 3,
+      '5': 11,
+      '6': '.MessageDto',
+      '10': 'messages'
+    },
     {'1': 'image', '3': 7, '4': 1, '5': 12, '10': 'image'},
     {'1': 'chat_image', '3': 5, '4': 1, '5': 9, '9': 0, '10': 'chatImage'},
   ],
@@ -104,10 +119,18 @@ const MessageDto$json = {
     {'1': 'data', '3': 7, '4': 3, '5': 12, '10': 'data'},
     {'1': 'content', '3': 8, '4': 3, '5': 9, '10': 'content'},
     {'1': 'sticker_content', '3': 9, '4': 1, '5': 5, '10': 'stickerContent'},
-    {'1': 'reaction', '3': 11, '4': 3, '5': 11, '6': '.ReactionMessageDto', '10': 'reaction'},
+    {
+      '1': 'reaction',
+      '3': 11,
+      '4': 3,
+      '5': 11,
+      '6': '.ReactionMessageDto',
+      '10': 'reaction'
+    },
     {'1': 'forwarded', '3': 12, '4': 1, '5': 8, '10': 'forwarded'},
     {'1': 'originalAuthor', '3': 13, '4': 1, '5': 9, '10': 'originalAuthor'},
     {'1': 'originalDate', '3': 14, '4': 1, '5': 9, '10': 'originalDate'},
+    {'1': 'button', '3': 15, '4': 3, '5': 9, '10': 'button'},
     {'1': 'date_message', '3': 10, '4': 1, '5': 9, '9': 0, '10': 'dateMessage'},
   ],
   '8': [
@@ -124,8 +147,8 @@ final $typed_data.Uint8List messageDtoDescriptor = $convert.base64Decode(
     'X2NvbnRlbnQYCSABKAVSDnN0aWNrZXJDb250ZW50Ei8KCHJlYWN0aW9uGAsgAygLMhMuUmVhY3'
     'Rpb25NZXNzYWdlRHRvUghyZWFjdGlvbhIcCglmb3J3YXJkZWQYDCABKAhSCWZvcndhcmRlZBIm'
     'Cg5vcmlnaW5hbEF1dGhvchgNIAEoCVIOb3JpZ2luYWxBdXRob3ISIgoMb3JpZ2luYWxEYXRlGA'
-    '4gASgJUgxvcmlnaW5hbERhdGUSIwoMZGF0ZV9tZXNzYWdlGAogASgJSABSC2RhdGVNZXNzYWdl'
-    'QhIKEG9wdGlvbmFsX21lc3NhZ2U=');
+    '4gASgJUgxvcmlnaW5hbERhdGUSFgoGYnV0dG9uGA8gAygJUgZidXR0b24SIwoMZGF0ZV9tZXNz'
+    'YWdlGAogASgJSABSC2RhdGVNZXNzYWdlQhIKEG9wdGlvbmFsX21lc3NhZ2U=');
 
 @$core.Deprecated('Use reactionMessageDtoDescriptor instead')
 const ReactionMessageDto$json = {
@@ -161,8 +184,8 @@ const ResponseDto$json = {
 };
 
 /// Descriptor for `ResponseDto`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List responseDtoDescriptor = $convert.base64Decode(
-    'CgtSZXNwb25zZUR0bxIYCgdtZXNzYWdlGAEgASgJUgdtZXNzYWdl');
+final $typed_data.Uint8List responseDtoDescriptor = $convert
+    .base64Decode('CgtSZXNwb25zZUR0bxIYCgdtZXNzYWdlGAEgASgJUgdtZXNzYWdl');
 
 @$core.Deprecated('Use updateDTODescriptor instead')
 const UpdateDTO$json = {
@@ -173,8 +196,8 @@ const UpdateDTO$json = {
 };
 
 /// Descriptor for `UpdateDTO`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List updateDTODescriptor = $convert.base64Decode(
-    'CglVcGRhdGVEVE8SHAoEY2hhdBgBIAEoCzIILkNoYXREdG9SBGNoYXQ=');
+final $typed_data.Uint8List updateDTODescriptor = $convert
+    .base64Decode('CglVcGRhdGVEVE8SHAoEY2hhdBgBIAEoCzIILkNoYXREdG9SBGNoYXQ=');
 
 @$core.Deprecated('Use updateAppReqDescriptor instead')
 const UpdateAppReq$json = {
@@ -202,4 +225,3 @@ const UpdateAppRes$json = {
 /// Descriptor for `UpdateAppRes`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List updateAppResDescriptor = $convert.base64Decode(
     'CgxVcGRhdGVBcHBSZXMSEgoEbmFtZRgBIAEoCVIEbmFtZRISCgRkYXRhGAIgASgMUgRkYXRh');
-

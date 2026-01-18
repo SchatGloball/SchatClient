@@ -1,13 +1,15 @@
+// This is a generated file - do not edit.
 //
-//  Generated code. Do not modify.
-//  source: auth.proto
-//
+// Generated from auth.proto.
+
 // @dart = 3.3
 
 // ignore_for_file: annotate_overrides, camel_case_types, comment_references
-// ignore_for_file: constant_identifier_names, library_prefixes
-// ignore_for_file: non_constant_identifier_names, prefer_final_fields
-// ignore_for_file: unnecessary_import, unnecessary_this, unused_import
+// ignore_for_file: constant_identifier_names
+// ignore_for_file: curly_braces_in_flow_control_structures
+// ignore_for_file: deprecated_member_use_from_same_package, library_prefixes
+// ignore_for_file: non_constant_identifier_names, prefer_relative_imports
+// ignore_for_file: unused_import
 
 import 'dart:convert' as $convert;
 import 'dart:core' as $core;
@@ -34,8 +36,8 @@ const FindDto$json = {
 };
 
 /// Descriptor for `FindDto`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List findDtoDescriptor = $convert.base64Decode(
-    'CgdGaW5kRHRvEhAKA2tleRgBIAEoCVIDa2V5');
+final $typed_data.Uint8List findDtoDescriptor =
+    $convert.base64Decode('CgdGaW5kRHRvEhAKA2tleRgBIAEoCVIDa2V5');
 
 @$core.Deprecated('Use userDtoDescriptor instead')
 const UserDto$json = {
@@ -44,8 +46,9 @@ const UserDto$json = {
     {'1': 'id', '3': 1, '4': 1, '5': 5, '10': 'id'},
     {'1': 'username', '3': 2, '4': 1, '5': 9, '10': 'username'},
     {'1': 'email', '3': 3, '4': 1, '5': 9, '10': 'email'},
-    {'1': 'password', '3': 4, '4': 1, '5': 9, '9': 0, '10': 'password'},
-    {'1': 'image_avatar', '3': 5, '4': 1, '5': 9, '9': 0, '10': 'imageAvatar'},
+    {'1': 'is_bot', '3': 4, '4': 1, '5': 8, '10': 'isBot'},
+    {'1': 'password', '3': 5, '4': 1, '5': 9, '9': 0, '10': 'password'},
+    {'1': 'image_avatar', '3': 6, '4': 1, '5': 9, '9': 0, '10': 'imageAvatar'},
   ],
   '8': [
     {'1': 'optional_password'},
@@ -55,8 +58,9 @@ const UserDto$json = {
 /// Descriptor for `UserDto`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List userDtoDescriptor = $convert.base64Decode(
     'CgdVc2VyRHRvEg4KAmlkGAEgASgFUgJpZBIaCgh1c2VybmFtZRgCIAEoCVIIdXNlcm5hbWUSFA'
-    'oFZW1haWwYAyABKAlSBWVtYWlsEhwKCHBhc3N3b3JkGAQgASgJSABSCHBhc3N3b3JkEiMKDGlt'
-    'YWdlX2F2YXRhchgFIAEoCUgAUgtpbWFnZUF2YXRhckITChFvcHRpb25hbF9wYXNzd29yZA==');
+    'oFZW1haWwYAyABKAlSBWVtYWlsEhUKBmlzX2JvdBgEIAEoCFIFaXNCb3QSHAoIcGFzc3dvcmQY'
+    'BSABKAlIAFIIcGFzc3dvcmQSIwoMaW1hZ2VfYXZhdGFyGAYgASgJSABSC2ltYWdlQXZhdGFyQh'
+    'MKEW9wdGlvbmFsX3Bhc3N3b3Jk');
 
 @$core.Deprecated('Use tokensDtoDescriptor instead')
 const TokensDto$json = {
@@ -78,8 +82,8 @@ const RequestDto$json = {
 };
 
 /// Descriptor for `RequestDto`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List requestDtoDescriptor = $convert.base64Decode(
-    'CgpSZXF1ZXN0RHRv');
+final $typed_data.Uint8List requestDtoDescriptor =
+    $convert.base64Decode('CgpSZXF1ZXN0RHRv');
 
 @$core.Deprecated('Use responseDtoDescriptor instead')
 const ResponseDto$json = {
@@ -90,8 +94,8 @@ const ResponseDto$json = {
 };
 
 /// Descriptor for `ResponseDto`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List responseDtoDescriptor = $convert.base64Decode(
-    'CgtSZXNwb25zZUR0bxIYCgdtZXNzYWdlGAEgASgJUgdtZXNzYWdl');
+final $typed_data.Uint8List responseDtoDescriptor = $convert
+    .base64Decode('CgtSZXNwb25zZUR0bxIYCgdtZXNzYWdlGAEgASgJUgdtZXNzYWdl');
 
 @$core.Deprecated('Use fileDtoDescriptor instead')
 const FileDto$json = {
@@ -102,6 +106,5 @@ const FileDto$json = {
 };
 
 /// Descriptor for `FileDto`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List fileDtoDescriptor = $convert.base64Decode(
-    'CgdGaWxlRHRvEhIKBGRhdGEYASABKAxSBGRhdGE=');
-
+final $typed_data.Uint8List fileDtoDescriptor =
+    $convert.base64Decode('CgdGaWxlRHRvEhIKBGRhdGEYASABKAxSBGRhdGE=');

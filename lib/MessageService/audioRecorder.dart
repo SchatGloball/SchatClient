@@ -9,7 +9,8 @@ import '../eventStore.dart';
 
 class AudioRecorderPage extends StatefulWidget {
   late int chatId;
-  AudioRecorderPage({super.key, required this.chatId});
+  final VoidCallback updateParent;
+  AudioRecorderPage({super.key, required this.chatId, required this.updateParent});
 
   @override
   State<AudioRecorderPage> createState() => _AudioRecorderPage(chatId: chatId);
@@ -166,15 +167,14 @@ class _AudioRecorderPage extends State<AudioRecorderPage>
                                   child: InkWell(
                                     onTap: () async {
                                       await record.stop();
-                                      setState(() {
-                                        recordAudio = false;
-
-                                      });
+                                    setState(() {
+                                    recordAudio = false;  
+                                    widget.updateParent();
+                                    });
                                     },
                                     child: const Icon(
                                       Icons.highlight_remove_rounded,
                                       size: 40,
-                                      color: Colors.red,
                                     ),
                                   )),
                             ],
@@ -193,14 +193,15 @@ class _AudioRecorderPage extends State<AudioRecorderPage>
                     onTap: () async {
                       await record.stop();
                       await saveAsWav();
-                      Map res = await chatApi
+                      Map res = await config.server.chatApi
                           .sendMessages(chatId, 'audio', [recordFile]);
-                      recordAudio = false;
+                          setState(() {
+                             recordAudio = false;
+                          });
                     },
                     child: const Icon(
                       Icons.send,
                       size: 40,
-                      color: Colors.amber,
                     ),
                   ),
                 ),
